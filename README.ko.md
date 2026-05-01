@@ -5,9 +5,8 @@
 ---
 
 # Switch 병합 / 분리 툴 (GUI)
-
-- Nintendo Switch NSP, NSZ, XCI, XCZ 파일을 병합 및 분리 GUI 툴
-- 디스크에 임시 파일을 생성하지 않는 스트리밍 파이프라인 방식
+Nintendo Switch NSP, NSZ, XCI, XCZ 파일을 병합 및 분리 GUI 툴
+디스크에 임시 파일을 생성하지 않는 스트리밍 파이프라인 방식
 
 <img width="800" height="600" alt="image" src="https://github.com/user-attachments/assets/6cf35dbb-315c-4d2b-a122-00aaa93f1e20" />
 

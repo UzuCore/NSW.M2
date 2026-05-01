@@ -1,40 +1,41 @@
 <p align="right">
-🇺🇸 English | <a href="README.ko.md">🇰🇷 한국어</a>
+🇺🇸 English | <a href="README_KR.md">🇰🇷 한국어</a>
 </p>
 
 ---
 
-# Switch Container Merger / Splitter (GUI)
+# Switch Merge / Split Tool (GUI)
 
-- Lightweight GUI tool to merge and split Nintendo Switch NSP, NSZ, XCI and XCZ files.
-- Processes files using a streaming pipeline without creating temporary data on disk.
+GUI tool for merging and splitting Nintendo Switch NSP, NSZ, XCI, and XCZ files.
 
-<img width="800" height="600" alt="image" src="https://github.com/user-attachments/assets/5c45dae6-d68e-46aa-8a20-badda83b9f01" />
+This tool uses a streaming pipeline that does not create temporary files on disk.
+
+<img width="800" height="600" alt="image" src="https://github.com/user-attachments/assets/e2564a4e-cefd-4458-a0ae-17c2feb9f332" />
 
 ---
 
 ## Features
 
-### Merge split container files
+### Merge base game, updates, and DLC into a single file
 
-- Combine split container parts into a single file
-- Drag & drop support
-- Automatic format detection
+- Drag & drop support  
+- Automatic format detection  
+- Optional compression when merging (NSZ)
 
-### Split container files
+### Split merged files into individual files
 
-- Split large container files into smaller parts
+- Split base game, updates, and DLC into separate files
 
 ---
 
 ## Supported Formats
 
-- NSP (merge / split)
-- XCI (merge / split)
-- NSZ (merge / split, auto-decompressed)
-- XCZ (merge / split, auto-decompressed)
+- NSP (merge / split)  
+- XCI (merge / split)  
+- NSZ (merge / split, auto decompression)  
+- XCZ (merge / split, auto decompression)
 
-All operations produce NSP output.
+All outputs are generated as NSP or NSZ files.
 
 ---
 
@@ -42,63 +43,42 @@ All operations produce NSP output.
 
 When using compressed formats:
 
-- NSZ files are decompressed automatically
-- XCZ files are decompressed automatically
+- NSZ files are automatically decompressed  
+- XCZ files are automatically decompressed  
 
-Decompression happens during processing.
+Decompression runs simultaneously during processing.
 
 ---
 
-## Streaming Processing
+## Streaming Processing Pipeline
 
-Uses a streaming pipeline that:
+This tool uses a real-time streaming pipeline to:
 
-- Processes data during merge or split
-- Avoids temporary files
-- Reduces disk usage
-- Improves performance
+- Process data during merge and split operations  
+- Prevent temporary file creation  
+- Reduce disk usage  
+- Improve performance  
 
 ### Traditional workflow
 
-1. Decompress NSZ/XCZ
-2. Create temporary NSP
-3. Merge or split
+1. Decompress NSZ/XCZ  
+2. Create temporary NSP  
+3. Perform merge or split  
 
-This tool performs everything in a single step.
-
----
-
-## Use Cases
-
-- Working with split NSP/XCI files
-- Handling compressed NSZ/XCZ containers
-- Processing very large files
-- Automation workflows
+This tool performs all steps simultaneously.
 
 ---
 
-## Built With
+## Development Environment
 
-- Visual Studio 2022 — Primary development environment
-- .NET 8.0 (LTS) — High-performance cross-platform runtime
-- LibHac — Nintendo Switch filesystem and container handling
-- WPF — Windows desktop GUI framework
-
----
-
-## Technical Notes
-
-- Streaming I/O architecture
-- Optimized for large files
-- Lightweight GUI
+- Visual Studio 2026  
+- .NET 8.0 (LTS)  
+- LibHac  
+- Avalonia  
 
 ---
 
 ## Legal Notice
 
 This project does not include any encryption keys.  
-Users must provide their own keys if required.
-
 This project is intended for research and development purposes only.
-
----

@@ -6,9 +6,8 @@
 
 # Switch Merge / Split Tool (GUI)
 
-GUI tool for merging and splitting Nintendo Switch NSP, NSZ, XCI, and XCZ files.
-
-This tool uses a streaming pipeline that does not create temporary files on disk.
+- GUI tool for merging and splitting Nintendo Switch NSP, NSZ, XCI, and XCZ files.
+- This tool uses a streaming pipeline that does not create temporary files on disk.
 
 <img width="800" height="600" alt="image" src="https://github.com/user-attachments/assets/e2564a4e-cefd-4458-a0ae-17c2feb9f332" />
 

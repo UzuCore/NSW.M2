@@ -20,14 +20,15 @@ public class AppConfig
     private static readonly Lazy<AppConfig> _instance = new(() => Load());
     public static AppConfig Instance => _instance.Value;
 
-    private int _compressLevel = 3;
+    private int _compressLevel = 0;
+
     public int CompressLevel
     {
         get => _compressLevel;
-        set => _compressLevel = (value < 0 || value > 22) ? 3 : value;
+        set => _compressLevel = value;
     }
 
-    public bool VerifyCompress { get; set; } = true;
+    public bool VerifyCompress { get; set; } = false;
 
     private AppConfig() { }
 

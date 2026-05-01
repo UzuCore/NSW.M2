@@ -75,6 +75,7 @@
                         CornerRadius="6">
 					<Panel>
 						<TextBox x:Name="txtOutput"
+								 FontSize="11"
                                  Background="Transparent"
                                  BorderThickness="0"
                                  Foreground="#DCDCDC"
@@ -111,7 +112,7 @@
 
 				<Slider Grid.Column="1"
 						x:Name="sliderCompression"
-						Minimum="0" Maximum="22"
+						Minimum="0" Maximum="18"
 						Value="{Binding CompressLevel}"
 						SmallChange="1" LargeChange="1"
 						IsSnapToTickEnabled="True"
@@ -140,7 +141,7 @@
 					<StackPanel Orientation="Horizontal">
 						<Image x:Name="imgVerify"
 							   Width="20" Height="20" Margin="0,0,10,0"/>
-						<TextBlock Text="{x:Static l:Resources.Button_Verify}" VerticalAlignment="Center" FontSize="12"/>
+						<TextBlock Text="{x:Static l:Resources.Button_Validate}" VerticalAlignment="Center" FontSize="12"/>
 					</StackPanel>
 				</ToggleButton>
 
@@ -164,19 +165,31 @@
 					<RowDefinition Height="Auto"/>
 					<RowDefinition Height="Auto"/>
 				</Grid.RowDefinitions>
-				<Grid Grid.Row="0" Margin="0,0,0,4" ColumnDefinitions="*, Auto">
-					<TextBlock x:Name="progressLabel" Grid.Column="0" Text="{x:Static l:Resources.Status_Processing}" FontSize="11" Foreground="#A0A0A0"/>
-					<TextBlock x:Name="progressTime" Grid.Column="1" FontSize="11" Foreground="#606060"/>
+				<Grid Grid.Row="0" Margin="0,0,0,4" ColumnDefinitions="*, Auto, Auto">
+					<TextBlock Grid.Column="0" x:Name="progressLabel" Text="{x:Static l:Resources.Status_Processing}" FontSize="11" Foreground="#A0A0A0" VerticalAlignment="Center"/>
+					<TextBlock Grid.Column="1" x:Name="progressPercent" Margin="10,0,15,0" FontSize="11" Foreground="#4CAF50" VerticalAlignment="Center"/>
+					<StackPanel Grid.Column="2" HorizontalAlignment="Right" Orientation="Horizontal" VerticalAlignment="Center">
+						<TextBlock x:Name="progressSpeed" Foreground="Gray" FontSize="11" Margin="0,0,10,0" VerticalAlignment="Center"/>
+						<TextBlock x:Name="progressTime" FontSize="11" Foreground="#4CAF50" VerticalAlignment="Center"/>
+					</StackPanel>
 				</Grid>
 				<ProgressBar Grid.Row="1" x:Name="progress" Minimum="0" Maximum="100" Height="4"/>
 			</Grid>
 
 			<Border Grid.Row="4" Background="#12FFFFFF" BorderBrush="#30FFFFFF" BorderThickness="1" CornerRadius="8" Padding="2">
-				<ScrollViewer x:Name="svLogBox" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
-					<SelectableTextBlock x:Name="logBox" FontSize="11" Foreground="#C8C8C8"
-										 Background="Transparent" Padding="8,6"
-										 TextWrapping="Wrap"/>
-				</ScrollViewer>
+				<Grid>
+					<ScrollViewer x:Name="svLogBox"
+								  HorizontalScrollBarVisibility="Disabled"
+								  VerticalScrollBarVisibility="Auto"
+								  ZIndex="0">
+						<SelectableTextBlock x:Name="logBox"
+											 FontSize="11"
+											 Foreground="#C8C8C8"
+											 Background="Transparent"
+											 Padding="8,6"
+											 TextWrapping="Wrap"/>
+					</ScrollViewer>					
+				</Grid>
 			</Border>
 		</Grid>
 	</Grid>

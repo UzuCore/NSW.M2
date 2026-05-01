@@ -154,7 +154,7 @@
     <value>Удалить всё</value>
   </data>
   <data name="Dialog_SelectGameFile" xml:space="preserve">
-    <value>Выберите файлы игры</value>
+    <value>Выберите файл игры</value>
   </data>
   <data name="Filter_SwitchFiles" xml:space="preserve">
     <value>Файлы Switch</value>
@@ -163,7 +163,7 @@
     <value>Все файлы</value>
   </data>
   <data name="Status_Analyzing" xml:space="preserve">
-    <value>Анализирование...</value>
+    <value>Анализ...</value>
   </data>
   <data name="Msg_Title_Info" xml:space="preserve">
     <value>Информация</value>
@@ -181,13 +181,10 @@
     <value>━━ Анализ метаданных... ━━</value>
   </data>
   <data name="Log_FinalId" xml:space="preserve">
-    <value>Итоговый ID: [{0}] Версия: {1}</value>
+    <value>Итоговый ID: {0} / Версия: {1}</value>
   </data>
   <data name="Log_MergeStart" xml:space="preserve">
     <value>━━ Запуск объединения Super NSP ━━</value>
-  </data>
-  <data name="Log_CompressionDone" xml:space="preserve">
-    <value>  [Сжатие завершено] {0}</value>
   </data>
   <data name="Log_MergeComplete" xml:space="preserve">
     <value>Объединение завершено: {0}</value>
@@ -199,19 +196,13 @@
     <value>Контент уже единый или нет целей для разделения.</value>
   </data>
   <data name="Log_SplitComplete" xml:space="preserve">
-    <value>Разделение {0} завершено ({1})</value>
+    <value>Разделение завершено: {0}</value>
   </data>
   <data name="Log_SplitFailed" xml:space="preserve">
     <value>Ошибка разделения (ID: {0}): {1}</value>
   </data>
   <data name="Log_WriteNspFailed" xml:space="preserve">
     <value>Ошибка записи NSP: {0}</value>
-  </data>
-  <data name="Status_Tik_O" xml:space="preserve">
-    <value>Tik присутствует</value>
-  </data>
-  <data name="Status_Tik_X" xml:space="preserve">
-    <value>Tik отсутствует</value>
   </data>
   <data name="Main_SelectFolder" xml:space="preserve">
     <value>Выберите рабочую папку</value>
@@ -220,11 +211,10 @@
     <value>Прошло времени: {0}</value>
   </data>
   <data name="Main_Log_AllComplete" xml:space="preserve">
-    <value>
-✓ Все задачи завершены. Общее время: {0}</value>
+    <value>✓ Все задачи завершены. Общее время: {0}</value>
   </data>
   <data name="Main_Msg_Done" xml:space="preserve">
-    <value>Готово! {0}</value>
+    <value>Готово!</value>
   </data>
   <data name="Main_Err_NoBase" xml:space="preserve">
     <value>Добавьте файл с базовой игрой.</value>
@@ -233,15 +223,13 @@
     <value>Укажите рабочую папку.</value>
   </data>
   <data name="Main_Err_NoFiles" xml:space="preserve">
-    <value>Добавьте файлы в список для разделения.</value>
+    <value>Добавьте файлы и попробуйте снова.</value>
   </data>
   <data name="Main_Log_SplitStart" xml:space="preserve">
-    <value>
-━━ Запуск анализа разделения: {0} ━━</value>
+    <value>━━ Запуск анализа разделения: {0} ━━</value>
   </data>
   <data name="Main_Log_AllSplitDone" xml:space="preserve">
-    <value>
-✓ Все разделения завершены! Общее время: {0}</value>
+    <value>✓ Все разделения завершены! Общее время: {0}</value>
   </data>
   <data name="Main_Msg_SplitDone" xml:space="preserve">
     <value>Разделение завершено.</value>
@@ -283,22 +271,16 @@
     <value>Неполный созданный файл удалён.</value>
   </data>
   <data name="Log_SplitPreparing" xml:space="preserve">
-    <value>▶ [{0}] Подготовка к извлечению: {1} (v{2})</value>
+    <value>{0} Начало разделения</value>
   </data>
   <data name="Log_SplitDecompressing" xml:space="preserve">
-    <value>   └ {0} -&gt; Распаковка и извлечение...</value>
+    <value>- {0} Распаковка и разделение...</value>
   </data>
   <data name="Log_SplitExtracting" xml:space="preserve">
-    <value>   └ {0} -&gt; Извлечение...</value>
-  </data>
-  <data name="Progress_Splitting" xml:space="preserve">
-    <value>{0} | {1} Извлечение</value>
+    <value>- {0} Разделение...</value>
   </data>
   <data name="Main_Err_NoKeys_Android" xml:space="preserve">
     <value>Файл prod.keys не найден. Поместите файл ключей в папку Download.</value>
-  </data>
-  <data name="Log_CompressAndMerge" xml:space="preserve">
-    <value>  [Сжатие и объединение]</value>
   </data>
   <data name="Label_Compression" xml:space="preserve">
     <value>Сжатие</value>
@@ -328,10 +310,7 @@
     <value>Проверка завершена</value>
   </data>
   <data name="Log_Validating" xml:space="preserve">
-    <value>Проверка...</value>
-  </data>
-  <data name="Button_Verify" xml:space="preserve">
-    <value>Проверить</value>
+    <value>Валидация...</value>
   </data>
   <data name="Log_CompressionRatio" xml:space="preserve">
     <value>Коэффициент сжатия</value>
@@ -357,9 +336,6 @@
   <data name="Log_StatusCopying" xml:space="preserve">
     <value>Копирование...</value>
   </data>
-  <data name="Log_StatusVerifying" xml:space="preserve">
-    <value>Проверка...</value>
-  </data>
   <data name="Log_StatusDone" xml:space="preserve">
     <value>Готово</value>
   </data>
@@ -376,9 +352,21 @@
     <value>Папка вывода</value>
   </data>
   <data name="ToolTip_CompressLevel" xml:space="preserve">
-    <value>3: Максимальная скорость | 9: Сбалансировано | 18: Рекомендуется | 22: Максимальное сжатие</value>
+    <value>3: Максимальная скорость | 9: Сбалансировано | 18: Рекомендуется</value>
   </data>
-  <data name="ToolTip_VerifyCompress" xml:space="preserve">
-    <value>Выполняет дополнительную проверку после сжатия</value>
+  <data name="ToolTip_ValidateCompress" xml:space="preserve">
+    <value>Выполняет дополнительную валидацию после сжатия</value>
+  </data>
+  <data name="Log_CompressAndMerge" xml:space="preserve">
+    <value>Сжатие и объединение...</value>
+  </data>
+  <data name="Log_Splitting" xml:space="preserve">
+    <value>Идёт разделение...</value>
+  </data>
+  <data name="Button_Validate" xml:space="preserve">
+    <value>Валидировать</value>
+  </data>
+  <data name="Log_StatusValidating" xml:space="preserve">
+    <value>Валидация...</value>
   </data>
 </root>

@@ -11,7 +11,7 @@ public partial class App : Application
 {
     public override void Initialize()
     {
-        AvaloniaXamlLoader.Load(this);
+        AvaloniaXamlLoader.Load(this);        
 
         //CultureInfo.CurrentUICulture = new CultureInfo("en-US");
         //CultureInfo.CurrentUICulture = new CultureInfo("ja-JP");

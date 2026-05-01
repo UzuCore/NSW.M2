@@ -16,8 +16,17 @@ sealed class Program
     // Avalonia configuration, don't remove; also used by visual designer.
     public static AppBuilder BuildAvaloniaApp()
         => AppBuilder.Configure<App>()
-            .UsePlatformDetect()
-            .WithInterFont()
-            .UseReactiveUI()
-            .LogToTrace();
+        .UsePlatformDetect()
+        .With(new Win32PlatformOptions
+        {
+            RenderingMode =
+            [
+                Win32RenderingMode.AngleEgl,
+                Win32RenderingMode.Wgl,
+                Win32RenderingMode.Software
+                ]
+        })
+        .WithInterFont()
+        .UseReactiveUI()
+        .LogToTrace();
 }

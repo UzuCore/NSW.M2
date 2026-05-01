@@ -17,5 +17,7 @@ public sealed record BuildRequest(string BaseFilePath, string UpdateFilePath, IR
 
     public string? TargetBaseTitleId { get; set; }
 
+    public string? TargetBaseTitleName { get; set; }
+
     public MetadataResult? ResolvedMeta { get; set; }
 }

@@ -181,13 +181,10 @@
     <value>━━ Analyzing metadata... ━━</value>
   </data>
   <data name="Log_FinalId" xml:space="preserve">
-    <value>Final ID: [{0}] Version: {1}</value>
+    <value>Final ID: {0} / Version: {1}</value>
   </data>
   <data name="Log_MergeStart" xml:space="preserve">
     <value>━━ Starting Super NSP merge ━━</value>
-  </data>
-  <data name="Log_CompressionDone" xml:space="preserve">
-    <value>  [Compression Complete] {0}</value>
   </data>
   <data name="Log_MergeComplete" xml:space="preserve">
     <value>Merge completed: {0}</value>
@@ -199,19 +196,13 @@
     <value>Already a single content or no items to split.</value>
   </data>
   <data name="Log_SplitComplete" xml:space="preserve">
-    <value>{0} split complete ({1})</value>
+    <value>split complete: {0}</value>
   </data>
   <data name="Log_SplitFailed" xml:space="preserve">
     <value>Split failed (ID: {0}): {1}</value>
   </data>
   <data name="Log_WriteNspFailed" xml:space="preserve">
     <value>Failed to write NSP: {0}</value>
-  </data>
-  <data name="Status_Tik_O" xml:space="preserve">
-    <value>Ticket Present</value>
-  </data>
-  <data name="Status_Tik_X" xml:space="preserve">
-    <value>Ticket Missing</value>
   </data>
   <data name="Main_SelectFolder" xml:space="preserve">
     <value>Select Output Folder</value>
@@ -220,11 +211,10 @@
     <value>{0} elapsed</value>
   </data>
   <data name="Main_Log_AllComplete" xml:space="preserve">
-    <value>
-✓ All tasks completed. Total time: {0}</value>
+    <value>✓ All tasks completed. Total time: {0}</value>
   </data>
   <data name="Main_Msg_Done" xml:space="preserve">
-    <value>Done! {0}</value>
+    <value>Done!</value>
   </data>
   <data name="Main_Err_NoBase" xml:space="preserve">
     <value>Please add a file containing the Base game.</value>
@@ -233,15 +223,13 @@
     <value>Please set the output folder.</value>
   </data>
   <data name="Main_Err_NoFiles" xml:space="preserve">
-    <value>Please add files to the list for splitting.</value>
+    <value>Please add files and try again.</value>
   </data>
   <data name="Main_Log_SplitStart" xml:space="preserve">
-    <value>
-━━ Starting Split Analysis: {0} ━━</value>
+    <value>━━ Starting Split Analysis: {0} ━━</value>
   </data>
   <data name="Main_Log_AllSplitDone" xml:space="preserve">
-    <value>
-✓ All split tasks completed! Total time: {0}</value>
+    <value>✓ All split tasks completed! Total time: {0}</value>
   </data>
   <data name="Main_Msg_SplitDone" xml:space="preserve">
     <value>Splitting is complete.</value>
@@ -283,22 +271,16 @@
     <value>Incomplete file was deleted.</value>
   </data>
   <data name="Log_SplitPreparing" xml:space="preserve">
-    <value>▶ [{0}] Preparing extraction: {1} (v{2})</value>
+    <value>{0} Starting splitting</value>
   </data>
   <data name="Log_SplitDecompressing" xml:space="preserve">
-    <value>   └ {0} -&gt; Decompressing and extracting...</value>
+    <value>- {0} Decompressing and splitting...</value>
   </data>
   <data name="Log_SplitExtracting" xml:space="preserve">
-    <value>   └ {0} -&gt; Extracting...</value>
-  </data>
-  <data name="Progress_Splitting" xml:space="preserve">
-    <value>{0} | {1} Extracting</value>
+    <value>- {0} Splitting...</value>
   </data>
   <data name="Main_Err_NoKeys_Android" xml:space="preserve">
     <value>prod.keys file not found. Please place the key file in the Download folder.</value>
-  </data>
-  <data name="Log_CompressAndMerge" xml:space="preserve">
-    <value>  [Compress &amp; Merge]</value>
   </data>
   <data name="Label_Compression" xml:space="preserve">
     <value>Compression</value>
@@ -330,9 +312,6 @@
   <data name="Log_Validating" xml:space="preserve">
     <value>Validating...</value>
   </data>
-  <data name="Button_Verify" xml:space="preserve">
-    <value>Verify</value>
-  </data>
   <data name="Log_CompressionRatio" xml:space="preserve">
     <value>Compression ratio</value>
   </data>
@@ -357,9 +336,6 @@
   <data name="Log_StatusCopying" xml:space="preserve">
     <value>Copying...</value>
   </data>
-  <data name="Log_StatusVerifying" xml:space="preserve">
-    <value>Verifying...</value>
-  </data>
   <data name="Log_StatusDone" xml:space="preserve">
     <value>Done</value>
   </data>
@@ -376,9 +352,21 @@
     <value>Output Path</value>
   </data>
   <data name="ToolTip_CompressLevel" xml:space="preserve">
-    <value>3: Fastest | 9: Balanced | 18: Recommended | 22: Maximum compression</value>
+    <value>3: Fastest | 9: Balanced | 18: Recommended</value>
   </data>
-  <data name="ToolTip_VerifyCompress" xml:space="preserve">
-    <value>Runs an additional verification after compression</value>
+  <data name="ToolTip_ValidateCompress" xml:space="preserve">
+    <value>Runs an additional validation after compression</value>
+  </data>
+  <data name="Log_CompressAndMerge" xml:space="preserve">
+    <value>Compressing &amp; Merging...</value>
+  </data>
+  <data name="Log_Splitting" xml:space="preserve">
+    <value>Separating...</value>
+  </data>
+  <data name="Button_Validate" xml:space="preserve">
+    <value>Validate</value>
+  </data>
+  <data name="Log_StatusValidating" xml:space="preserve">
+    <value>Validating...</value>
   </data>
 </root>

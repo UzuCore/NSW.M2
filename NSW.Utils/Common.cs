@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using System.Buffers;
+using System.Diagnostics;
 
 namespace NSW.Utils;
 
@@ -17,7 +18,7 @@ public static class Common
         double totalMiB = (double)totalBytes / 1024 / 1024;
 
         int pct = totalBytes > 0 ? Math.Min(100, (int)((double)readBytes / totalBytes * 100)): 0;
-        string formattedLabel = $"{label} {currentMiB:N0}MiB / {totalMiB:N2}MiB";
+        string formattedLabel = $"{label} ({currentMiB:N0}MiB / {totalMiB:N2}MiB)";
 
         return (pct, formattedLabel, currentMiB, totalMiB);
     }
@@ -44,5 +45,24 @@ public static class Common
         }
 
         return filePath;
+    }
+
+    public static async Task CopyStreamAsync(Stream src, Stream dst, CancellationToken ct, Action<long>? onRead = null)
+    {
+        const int bufferSize = 81920;
+        byte[] buf = ArrayPool<byte>.Shared.Rent(bufferSize);
+        try
+        {
+            int read;
+            while ((read = await src.ReadAsync(buf, 0, bufferSize, ct)) > 0)
+            {
+                await dst.WriteAsync(buf, 0, read, ct);
+                onRead?.Invoke(read);
+            }
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(buf);
+        }
     }
 }

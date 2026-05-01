@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Documents;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
@@ -10,6 +11,7 @@ using NSW.Avalonia.UI;
 using NSW.Core.Enums;
 using NSW.M2.Avalonia.Services;
 using NSW.M2.Avalonia.ViewModels;
+using NSW.Utils;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -26,29 +28,39 @@ public partial class MainView : UserControl
 {
     private readonly Stopwatch _totalSw = new();
     private CancellationTokenSource? _cts;
+    
+    public Bitmap SelectedGameIcon { get; set; }
 
     private static readonly Bitmap MergeIcon = new (AssetLoader.Open(new Uri("avares://NSW.M2.Avalonia/Assets/Images/Merge.png")));
     private static readonly Bitmap SplitIcon = new (AssetLoader.Open(new Uri("avares://NSW.M2.Avalonia/Assets/Images/Split.png")));
     private static readonly Bitmap CancelIcon = new(AssetLoader.Open(new Uri("avares://NSW.M2.Avalonia/Assets/Images/Cancel.png")));
 
+    Progress<ProgressInfo> _progressReporter;
     public MainView()
     {
         InitializeComponent();
 
         txtOutput.GetObservable(TextBox.TextProperty).Subscribe(text => {
-            if (outputHint != null)
-                outputHint.IsVisible = string.IsNullOrEmpty(text);
+            outputHint?.IsVisible = string.IsNullOrEmpty(text);
         });
-
-        if(!OperatingSystem.IsAndroid())
-            txtOutput.Text = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "output");
-        else
-            txtOutput.Text = Path.Combine("/sdcard/Download", "output");
+        
+        txtOutput.Text = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "output");
                 
         tbMergeText.Text = Res.Button_MergeStart;
         imgMerge.Source = MergeIcon;
         tbSplitText.Text = Res.Button_SplitStart;
         imgSplit.Source = SplitIcon;
+
+        _progressReporter = new (info =>
+        {
+            Dispatcher.UIThread.Post(() => {
+                progress.Value = info.Percent;
+                progressLabel.Text = info.Label;
+                progressPercent.Text = $"{info.Percent}%";
+                progressTime.Text = info.TimeInfo;
+                progressSpeed.Text = info.Speed;
+            });
+        });
 
         this.AttachedToVisualTree += (s, e) =>
         {
@@ -111,10 +123,6 @@ public partial class MainView : UserControl
             {
                 Process.Start("open", path);
             }
-            else if (OperatingSystem.IsAndroid())
-            {
-                
-            }
         }
         catch (Exception ex)
         {
@@ -148,12 +156,15 @@ public partial class MainView : UserControl
             return;
         }
 
-        logBox.Inlines?.Clear();
+        if (!FileMgr.GameFiles.Any())
+        {
+            await MessageBoxHelper.ShowWarning(Res.Main_Err_NoFiles);
+            return;
+        }
 
         if (!FileManagerControl.KeyExists())
-        {
-            string msg = OperatingSystem.IsAndroid() ? Res.Main_Err_NoKeys_Android : Res.Main_Err_NoKeys;
-            await MessageBoxHelper.ShowWarning(msg);
+        {            
+            await MessageBoxHelper.ShowWarning(Res.Main_Err_NoKeys);
             return;
         }
 
@@ -183,23 +194,14 @@ public partial class MainView : UserControl
         await SetWorking(true);
         _totalSw.Restart();
 
-        var progressReporter = new Progress<(int pct, string label)>(p =>
-        {
-            Dispatcher.UIThread.Post(() => {
-                this.progress.Value = p.pct >= 0 ? p.pct : 0;
-                progressLabel.Text = p.pct >= 0 ? $"{p.label} ({p.pct}%)" : p.label;
-                progressTime.Text = string.Format(Res.Main_Log_Elapsed, _totalSw.Elapsed.ToString(@"mm\:ss"));
-            });
-        });
-
         bool verify = tbVerify.IsChecked == true;
         int compressLevel = (int)sliderCompression.Value;
 
         try
         {
-            await Task.Run(() =>
+            await Task.Run(async () =>
             {
-                var results = NspMergeService.Merge(inputPaths, outputDir, compressLevel, verify, progressReporter, LogFromService, _cts.Token);
+                var results = await NspMergeService.Merge(inputPaths, outputDir, compressLevel, verify, _progressReporter, LogFromService, _cts.Token);
 
                 if (results != null && results.Count > 0)
                 {
@@ -207,7 +209,7 @@ public partial class MainView : UserControl
 
                     Dispatcher.UIThread.Post(async () =>
                     {
-                        await MessageBoxHelper.ShowInfo(string.Format(Res.Main_Msg_Done, string.Join("\n", results.Select(Path.GetFileName))));
+                        await MessageBoxHelper.ShowInfo(Res.Main_Msg_Done);
                     });
                 }
             }, _cts.Token);
@@ -237,8 +239,6 @@ public partial class MainView : UserControl
             return;
         }
 
-        logBox.Inlines?.Clear();
-
         if (!FileMgr.GameFiles.Any())
         {
             await MessageBoxHelper.ShowWarning(Res.Main_Err_NoFiles);
@@ -254,8 +254,7 @@ public partial class MainView : UserControl
 
         if (!FileManagerControl.KeyExists())
         {
-            string msg = OperatingSystem.IsAndroid() ? Res.Main_Err_NoKeys_Android : Res.Main_Err_NoKeys;
-            await MessageBoxHelper.ShowWarning(msg);
+            await MessageBoxHelper.ShowWarning(Res.Main_Err_NoKeys);
             return;
         }
 
@@ -278,31 +277,20 @@ public partial class MainView : UserControl
         await SetWorking(true, isSplit: true);
         _totalSw.Restart();
 
-        var progressReporter = new Progress<(int pct, string label)>(p =>
-        {
-            Dispatcher.UIThread.Post(() => {
-                this.progress.Value = p.pct >= 0 ? p.pct : 0;
-                progressLabel.Text = p.pct >= 0 ? $"{p.label} ({p.pct}%)" : p.label;
-                progressTime.Text = string.Format(Res.Main_Log_Elapsed, _totalSw.Elapsed.ToString(@"mm\:ss"));
-            });
-        });
-
         try
         {
             await Task.Run(() =>
             {
                 int resultCount = 0;
 
-                foreach (var fileVm in FileMgr.GameFiles)
+                for (int i=0; i< FileMgr.GameFiles.Count; i++)
                 {
+                    var fileVm = FileMgr.GameFiles[i];
                     _cts.Token.ThrowIfCancellationRequested();
-
-                    Log(string.Format(Res.Main_Log_SplitStart, Path.GetFileName(fileVm.FilePath)), LogLevel.Info);
-
-                    resultCount += NspSplitService.Split(fileVm.FilePath, outputDir, progressReporter, LogFromService, _cts.Token);
+                    resultCount += NspSplitService.Split(fileVm.FilePath, outputDir, i + 1, FileMgr.GameFiles.Count, _progressReporter, LogFromService, _cts.Token);
                 }
 
-                Log(string.Format(Res.Main_Log_AllSplitDone, _totalSw.Elapsed.ToString(@"mm\:ss")), LogLevel.Ok);
+                Log(string.Format(Res.Main_Log_AllComplete, _totalSw.Elapsed.ToString(@"mm\:ss")), LogLevel.Ok);
 
                 if (resultCount > 0)
                 {
@@ -341,11 +329,11 @@ public partial class MainView : UserControl
             return false;
         }
 
-        if (!FileMgr.GameFiles.Any(f => f.FileType.Contains('B')))
-        {
-            errorMsg = Res.Main_Err_NoBase;
-            return false;
-        }
+        //if (!FileMgr.GameFiles.Any(f => f.FileType.Contains('B')))
+        //{
+        //    errorMsg = Res.Main_Err_NoBase;
+        //    return false;
+        //}
 
         outputDir = txtOutput.Text?.Trim() ?? string.Empty;
         if (string.IsNullOrEmpty(outputDir))
@@ -358,23 +346,57 @@ public partial class MainView : UserControl
         return true;
     }
 
-    private void LogFromService(string msg, LogLevel level) => Log(msg, level);
+    private void LogFromService(string msg, LogLevel level, string titleId) => Log(msg, level, titleId);
 
-    private void Log(string msg, LogLevel level = LogLevel.Info)
+    private void Log(string msg, LogLevel level = LogLevel.Info, string titleId = "")
     {
         var color = LogColor.GetColor(level);
 
         Dispatcher.UIThread.Post(() =>
         {
-            string timestamp = DateTime.Now.ToString("HH:mm:ss");
-            var run = new global::Avalonia.Controls.Documents.Run($"[{timestamp}] {msg}{Environment.NewLine}")
-            {
-                Foreground = new SolidColorBrush(color)
-            };
             logBox.Inlines ??= [];
-            logBox.Inlines.Add(run);
+            string timestamp = DateTime.Now.ToString("HH:mm:ss");
+            var brush = new SolidColorBrush(color);
 
-            svLogBox.ScrollToEnd();
+            var timeRun = new Run($"[{timestamp}] ")
+            {
+                Foreground = brush,
+                BaselineAlignment = BaselineAlignment.Center
+            };
+            logBox.Inlines.Add(timeRun);
+
+            if (!string.IsNullOrEmpty(titleId) && titleId.Length >= 12)
+            {
+                string baseId = titleId[..12];
+                var game = FileMgr.GameFiles.FirstOrDefault(f =>
+                    f.TitleId != null && f.TitleId.StartsWith(baseId, StringComparison.OrdinalIgnoreCase));
+
+                if (game?.CoverBitmap != null)
+                {
+                    var img = new Image
+                    {
+                        Source = game.CoverBitmap,
+                        Width = 40,
+                        Height = 40,
+                        Margin = new Thickness(4, 0, 8, 0)
+                    };
+
+                    var container = new InlineUIContainer(img)
+                    {
+                        BaselineAlignment = BaselineAlignment.Center
+                    };
+                    logBox.Inlines.Add(container);
+                }
+            }
+
+            var msgRun = new Run($"{msg}{Environment.NewLine}")
+            {
+                Foreground = brush,
+                BaselineAlignment = BaselineAlignment.Center
+            };
+            logBox.Inlines.Add(msgRun);
+
+            Dispatcher.UIThread.Post(() => svLogBox.ScrollToEnd(), DispatcherPriority.Background);
         });
     }
 

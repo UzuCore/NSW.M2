@@ -9,6 +9,7 @@
              x:Class="NSW.Avalonia.UI.FileManagerControl"
              x:DataType="ui:FileManagerControl"
              FontFamily="Consolas">
+
 	<UserControl.Resources>
 		<DataTemplate x:Key="TypeCellTemplate" x:DataType="vm:GameFile">
 			<Border CornerRadius="4" Padding="6,2"
@@ -34,11 +35,10 @@
 
 	<Border BorderBrush="#33FFFFFF" BorderThickness="1" CornerRadius="8"
             Background="#12FFFFFF" Padding="10">
-		<Grid ColumnDefinitions="*, Auto">
-
+		<Grid ColumnDefinitions="*, Auto, 160, Auto, Auto">			
 			<Panel Grid.Column="0">
 				<StackPanel Name="dropHint" VerticalAlignment="Center" HorizontalAlignment="Center"
-                            Opacity="0.4" IsHitTestVisible="False" ZIndex="1">
+                            Opacity="0.7" IsHitTestVisible="False" ZIndex="1">
 					<Image Source="/Assets/Images/Drag.png" Width="32" Height="32" Margin="0,0,0,10" RenderOptions.BitmapInterpolationMode="HighQuality" />
 					<TextBlock Text="{x:Static l:Resources.Hint_DragAndDrop}"
                                FontSize="11" HorizontalAlignment="Center"/>
@@ -46,6 +46,7 @@
 
 				<DataGrid x:Name="lvFiles"
                           ItemsSource="{Binding GameFiles}"
+                          SelectedItem="{Binding SelectedGame, Mode=TwoWay}"
                           Background="Transparent"
                           Foreground="#DCDCDC"
                           BorderThickness="1"
@@ -53,40 +54,80 @@
                           AutoGenerateColumns="False"
                           SelectionMode="Extended"
                           DragDrop.AllowDrop="True"
-						  KeyUp="LvFiles_KeyUp">
+                          KeyUp="LvFiles_KeyUp"
+                          HorizontalScrollBarVisibility="Auto"
+                          VerticalScrollBarVisibility="Auto">
 					<DataGrid.Columns>
-						<DataGridTemplateColumn Header="{x:Static l:Resources.Header_Type}" Width="Auto"
-                                                CellTemplate="{StaticResource TypeCellTemplate}"/>
-
-						<DataGridTextColumn Header="{x:Static l:Resources.Header_FileName}" Width="Auto"
-                                            Binding="{Binding FileName}" FontSize="11"
-											/>
-
-						<DataGridTextColumn Header="{x:Static l:Resources.Header_Ext}" Width="Auto"
-                                            Binding="{Binding Extension}" FontSize="11"/>
-
-						<DataGridTextColumn Header="{x:Static l:Resources.Header_Size}" Width="75"
-                                            Binding="{Binding FileSize}" FontSize="11"/>
-
-						<DataGridTextColumn Header="{x:Static l:Resources.Header_FilePath}" Width="420"
-                                            Binding="{Binding FilePath}" FontSize="11"/>
+						<DataGridTemplateColumn Header="{x:Static l:Resources.Header_Type}" Width="80" CellTemplate="{StaticResource TypeCellTemplate}"/>
+						<DataGridTemplateColumn Header="{x:Static l:Resources.Header_FileName}" Width="Auto" MaxWidth="450">
+							<DataGridTemplateColumn.CellTemplate>
+								<DataTemplate x:DataType="vm:GameFile">
+									<TextBlock Text="{Binding FileName}" FontSize="11" VerticalAlignment="Center" Padding="5,0" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding FileName}"/>
+								</DataTemplate>
+							</DataGridTemplateColumn.CellTemplate>
+						</DataGridTemplateColumn>
+						<DataGridTextColumn Header="{x:Static l:Resources.Header_Ext}" Width="Auto" Binding="{Binding Extension}" FontSize="11"/>
+						<DataGridTextColumn Header="{x:Static l:Resources.Header_Size}" Width="Auto" Binding="{Binding FileSize}" FontSize="11"/>
+						<DataGridTemplateColumn Header="{x:Static l:Resources.Header_FilePath}" Width="Auto" MaxWidth="400">
+							<DataGridTemplateColumn.CellTemplate>
+								<DataTemplate x:DataType="vm:GameFile">
+									<TextBlock Text="{Binding FilePath}" FontSize="11" VerticalAlignment="Center" Padding="5,0" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding FilePath}"/>
+								</DataTemplate>
+							</DataGridTemplateColumn.CellTemplate>
+						</DataGridTemplateColumn>
 					</DataGrid.Columns>
 				</DataGrid>
 			</Panel>
 
-			<StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Top">
+			<Rectangle Grid.Column="1" VerticalAlignment="Stretch" Width="1" Fill="#33FFFFFF"/>
+			
+			<Border Grid.Column="2" VerticalAlignment="Top">
+				<StackPanel>
+					<Border CornerRadius="15" ClipToBounds="True" Margin="1">
+						<Image Source="{Binding SelectedGame.CoverBitmap}"
+							   Stretch="Uniform"
+							   RenderOptions.BitmapInterpolationMode="HighQuality"
+							   PointerPressed="IconImage_PointerPressed"></Image>
+					</Border>
+
+					<StackPanel Margin="10,10,10,0">
+						<TextBlock Text="{Binding SelectedGame.TitleName}"
+								   FontSize="11"
+								   FontWeight="Bold"
+								   Foreground="White"
+								   TextWrapping="Wrap"
+								   HorizontalAlignment="Center"
+								   TextAlignment="Center"
+								   Margin="0,0,0,4"/>
+
+						<TextBlock Text="{Binding SelectedGame.TitleId}"
+								   FontSize="10"
+								   Foreground="#A0A0A0"
+								   HorizontalAlignment="Center"
+								   ToolTip.Tip="Title ID"/>
+
+						<TextBlock Text="{Binding SelectedGame.Version, StringFormat='Ver {0}'}"
+								   FontSize="10"
+								   Foreground="#80FFFFFF"
+								   HorizontalAlignment="Center"
+								   Margin="0,2,0,0"/>
+					</StackPanel>
+				</StackPanel>
+			</Border>
+
+			<Rectangle Grid.Column="3" VerticalAlignment="Stretch" Width="1" Fill="#33FFFFFF"/>
+
+			<StackPanel Grid.Column="4" Margin="5,0,0,0" VerticalAlignment="Top">
 				<Button Name="btnAddFile" Width="32" Height="32" Margin="0,0,0,12" Background="Transparent" BorderThickness="0"
                         Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                         Click="BtnAddFile_Click" ToolTip.Tip="{x:Static l:Resources.ToolTip_AddFile}">
 					<Image Source="/Assets/Images/AddFile.png" Width="32" Height="32" Stretch="Fill" RenderOptions.BitmapInterpolationMode="HighQuality" />
 				</Button>
-
 				<Button Name="btnRemoveFile" Width="32" Height="32" Margin="0,0,0,12" Background="Transparent" BorderThickness="0"
                         Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                         Click="BtnRemoveFile_Click" ToolTip.Tip="{x:Static l:Resources.ToolTip_RemoveSelected}">
 					<Image Source="/Assets/Images/DeleteFile.png" Width="32" Height="32" Stretch="Fill" RenderOptions.BitmapInterpolationMode="HighQuality" />
 				</Button>
-
 				<Button Name="btnRemoveAllFiles" Width="32" Height="32" Margin="0,0,0,12" Background="Transparent" BorderThickness="0"
                         Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                         Click="BtnRemoveAllFiles_Click" ToolTip.Tip="{x:Static l:Resources.ToolTip_RemoveAll}">

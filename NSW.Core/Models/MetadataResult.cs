@@ -8,5 +8,5 @@ public record MetadataResult(
 {
     public string GetEffectiveDisplayVersion() => string.IsNullOrWhiteSpace(DisplayVersion) || DisplayVersion == "0" ? TitleVersion.ToString() : DisplayVersion;
 
-    public string GetTypeTag() => Utils.GetContentMetaTypeTag(Type);
+    public string GetTypeTag() => LibHacHelper.GetContentMetaTypeTag(Type);
 }

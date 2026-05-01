@@ -10,6 +10,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace NSW.Avalonia.Services;
 
@@ -21,8 +22,7 @@ public static class Pfs0Builder
     public const int MetaHashBlockSize = 0x1000;
     public const int PaddingSize = 0x200;
 
-
-    public static void BuildStreaming(string displayName, IEnumerable<(string Name, Action<Stream, Action<long>> Writer, long EstimatedSize, string Label)> files, Stream outputStream, IProgress<(int pct, string label)>? progress = null, CancellationToken ct = default)
+    public static async Task WriteAsync(string displayName, string titleId, IEnumerable<(string Name, Func<Stream, Action<long>, Task> Writer, long EstimatedSize, string Label)> files, Stream outputStream, IProgress<ProgressInfo>? progress = null, CancellationToken ct = default)
     {
         if (!outputStream.CanSeek)
             throw new InvalidOperationException("outputStream must be seekable");
@@ -67,18 +67,21 @@ public static class Pfs0Builder
 
         long totalEstimated = fileList.Sum(f => f.EstimatedSize);
         long totalWritten = 0;
-        string currentLabel = "";
+        string currentLabel = string.Empty;
         var reportSw = Stopwatch.StartNew();
         var startTime = Stopwatch.GetTimestamp();
 
         var window = new Queue<(long ts, long written)>();
         const double windowSec = 10.0;
 
-        void onRead(long bytesRead)
+        var reportLock = new object();
+
+        void ReportProgress(bool force = false)
         {
-            totalWritten += bytesRead;
-            if (reportSw.ElapsedMilliseconds >= 100)
+            lock (reportLock)
             {
+                if (!force && reportSw.ElapsedMilliseconds < 100) return;
+
                 long now = Stopwatch.GetTimestamp();
                 window.Enqueue((now, totalWritten));
 
@@ -110,32 +113,51 @@ public static class Pfs0Builder
 
                 int pct = totalEstimated > 0 ? (int)(totalWritten * 100 / totalEstimated) : 0;
                 var r = Common.CalculateProgress(totalWritten, totalEstimated, displayName);
-                progress?.Report((pct, $"{r.label} | {mibPerSec:F1} MiB/s | {elapsed:mm\\:ss} / {totalEta:mm\\:ss}"));
+                progress?.Report(new ProgressInfo(pct, r.label, titleId, $"{mibPerSec:F1} MiB/s", $"{elapsed:mm\\:ss} / {totalEta:mm\\:ss}"));
                 reportSw.Restart();
             }
+        }
+
+        void onRead(long bytesRead)
+        {
+            lock (reportLock)
+                totalWritten += bytesRead;
+            ReportProgress();
         }
 
         var actualOffsets = new ulong[fileList.Count];
         var actualSizes = new ulong[fileList.Count];
         ulong relOffset = 0;
 
-        for (int i = 0; i < fileList.Count; i++)
+        using var timer = new System.Timers.Timer(200);
+        timer.Elapsed += (_, _) => ReportProgress(force: true);
+        timer.AutoReset = true;
+        timer.Start();
+
+        try
         {
-            ct.ThrowIfCancellationRequested();
-            var (name, writer, _, label) = fileList[i];
+            for (int i = 0; i < fileList.Count; i++)
+            {
+                ct.ThrowIfCancellationRequested();
+                var (name, writer, _, label) = fileList[i];
 
-            currentLabel = label;
-            actualOffsets[i] = relOffset;
-            long fileStartPos = outputStream.Position;
+                currentLabel = label;
+                actualOffsets[i] = relOffset;
+                long fileStartPos = outputStream.Position;
 
-            writer(outputStream, onRead);
+                await writer(outputStream, onRead);
 
-            ulong written = (ulong)(outputStream.Position - fileStartPos);
-            actualSizes[i] = written;
-            relOffset += written;
+                ulong written = (ulong)(outputStream.Position - fileStartPos);
+                actualSizes[i] = written;
+                relOffset += written;
+            }
+        }
+        finally
+        {
+            timer.Stop();
         }
 
-        progress?.Report((100, currentLabel));
+        progress?.Report(new ProgressInfo(100, currentLabel, titleId, string.Empty, string.Empty));
 
         long endPos = outputStream.Position;
         outputStream.Position = entryTablePos;
@@ -151,7 +173,7 @@ public static class Pfs0Builder
         }
 
         outputStream.Position = endPos;
-        outputStream.Flush();
+        await outputStream.FlushAsync(ct);
     }
 
     private static ulong AlignUp(ulong value, ulong align) => value + align - 1 & ~(align - 1);

@@ -2,11 +2,14 @@
 using LibHac.Common.Keys;
 using LibHac.Fs;
 using LibHac.FsSystem;
+using LibHac.Tools.Fs;
 using LibHac.Tools.FsSystem;
 using LibHac.Tools.FsSystem.NcaUtils;
+using NSW.Utils;
 using System;
 using System.Buffers;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -21,7 +24,7 @@ namespace LibHac.NSZ;
 public class NcaToNczConverter(KeySet keySet)
 {
     private const long HeaderSize = 0x4000;
-    private const int ChunkSize = 0x400000;
+    private const int ChunkSize = 0x1000000;
 
     private const string StreamingSectionMagic = "NCZSECTN";
     private const string BlockSectionMagic = "NCZBLOCK";
@@ -30,7 +33,7 @@ public class NcaToNczConverter(KeySet keySet)
 
     private byte[]? _originalHash;
 
-    public void Convert(Stream ncaStream, Stream outputStream, int compressionLevel = 18, bool multiThread = true, Action<long>? onRead = null, CancellationToken ct = default)
+    public async Task ConvertAsync(Stream ncaStream, Stream outputStream, int compressionLevel = 18, Action<long>? onRead = null, CancellationToken ct = default)
     {
         _originalHash = null;
 
@@ -53,77 +56,50 @@ public class NcaToNczConverter(KeySet keySet)
 
         using var sha256 = System.Security.Cryptography.SHA256.Create();
 
-        int maxDegreeOfParallelism = multiThread ? Environment.ProcessorCount : 1;
-        using var semaphore = new SemaphoreSlim(maxDegreeOfParallelism);
-        var tasks = new List<Task<byte[]>>();
+        using var compressionStream = new CompressionStream(outputStream, compressionLevel, leaveOpen: true);
+        compressionStream.SetParameter(ZSTD_cParameter.ZSTD_c_nbWorkers, Environment.ProcessorCount);
 
-        try
+        var channel = System.Threading.Channels.Channel.CreateBounded<byte[]>(4);
+
+        var readTask = Task.Run(() =>
         {
-            long readPos = HeaderSize;
-
-            while (readPos < ncaSize)
+            try
             {
-                ct.ThrowIfCancellationRequested();
-
-                int toRead = (int)Math.Min(ChunkSize, ncaSize - readPos);
-                byte[] inBuf = new byte[toRead];
-
-                decryptedStorage.Read(readPos, inBuf.AsSpan(0, toRead)).ThrowIfFailure();
-                sha256.TransformBlock(inBuf, 0, toRead, null, 0);
-
-                semaphore.Wait(ct);
-                var task = Task.Run(() =>
+                long readPos = HeaderSize;
+                while (readPos < ncaSize)
                 {
-                    try
-                    {
-                        using var compressor = BuildCompressor(compressionLevel, false);
-                        return compressor.Wrap(inBuf).ToArray();
-                    }
-                    finally
-                    {
-                        semaphore.Release();
-                    }
-                }, ct);
+                    ct.ThrowIfCancellationRequested();
 
-                tasks.Add(task);
-                readPos += toRead;
-                onRead?.Invoke(toRead);
+                    int toRead = (int)Math.Min(ChunkSize, ncaSize - readPos);
+                    byte[] buf = new byte[toRead];
 
-                if (tasks.Count >= maxDegreeOfParallelism * 2)
-                {
-                    FlushTasks(tasks, outputStream);
-                    tasks.Clear();
+                    decryptedStorage.Read(readPos, buf.AsSpan(0, toRead)).ThrowIfFailure();
+                    sha256.TransformBlock(buf, 0, toRead, null, 0);
+
+                    channel.Writer.WriteAsync(buf, ct).AsTask().Wait(ct);
+
+                    readPos += toRead;
+                    onRead?.Invoke(toRead);
                 }
             }
+            finally
+            {
+                channel.Writer.Complete();
+            }
+        }, ct);
 
-            FlushTasks(tasks, outputStream);
-        }
-        finally
+        await foreach (var buf in channel.Reader.ReadAllAsync(ct))
         {
+            compressionStream.Write(buf, 0, buf.Length);
         }
+
+        await readTask;
 
         sha256.TransformFinalBlock([], 0, 0);
         _originalHash = sha256.Hash;
     }
 
-    private static void FlushTasks(List<Task<byte[]>> tasks, Stream output)
-    {
-        try
-        {
-            foreach (var t in tasks)
-            {
-                byte[] result = t.GetAwaiter().GetResult();
-                output.Write(result);
-            }
-        }
-        finally
-        {
-            foreach (var t in tasks)
-                t.Wait();
-        }
-    }
-
-    public void Verify(Stream nczStream, long totalVerifySize, ref long currentVerifyPos, string label, IProgress<(int pct, string label)>? progress, CancellationToken ct)
+    public async Task ValidateAsync(Stream nczStream, string titleId, long totalVerifySize, string label, IProgress<ProgressInfo>? progress, CancellationToken ct)
     {
         if (_originalHash == null)
             throw new InvalidOperationException("Convert must be called first.");
@@ -133,10 +109,13 @@ public class NcaToNczConverter(KeySet keySet)
         decrypted.GetSize(out long decSize).ThrowIfFailure();
 
         using var sha256 = System.Security.Cryptography.SHA256.Create();
-        var reportSw = System.Diagnostics.Stopwatch.StartNew();
+        var reportSw = Stopwatch.StartNew();
+        var startTime = Stopwatch.GetTimestamp();
+        double freq = Stopwatch.Frequency;
+        long currentVerifyPos = 0;
+        long startVerifyPos = currentVerifyPos;
 
-        int prefetchCount = 10;
-        var dataQueue = new System.Collections.Concurrent.BlockingCollection<byte[]>(prefetchCount);
+        var channel = System.Threading.Channels.Channel.CreateBounded<byte[]>(10);
 
         var readTask = Task.Run(() =>
         {
@@ -145,49 +124,59 @@ public class NcaToNczConverter(KeySet keySet)
                 long readPos = HeaderSize;
                 while (readPos < decSize)
                 {
-                    if (ct.IsCancellationRequested) break;
+                    ct.ThrowIfCancellationRequested();
 
                     int toRead = (int)Math.Min(ChunkSize, decSize - readPos);
                     byte[] buf = new byte[toRead];
                     decrypted.Read(readPos, buf.AsSpan()).ThrowIfFailure();
 
-                    dataQueue.Add(buf, ct);
+                    channel.Writer.WriteAsync(buf, ct).AsTask().Wait(ct);
                     readPos += toRead;
                 }
             }
             finally
             {
-                dataQueue.CompleteAdding();
+                channel.Writer.Complete();
             }
         }, ct);
 
-        try
+        await foreach (var data in channel.Reader.ReadAllAsync(ct))
         {
-            foreach (var data in dataQueue.GetConsumingEnumerable(ct))
+            sha256.TransformBlock(data, 0, data.Length, null, 0);
+
+            currentVerifyPos += data.Length;
+
+            if (reportSw.ElapsedMilliseconds >= 100)
             {
-                sha256.TransformBlock(data, 0, data.Length, null, 0);
+                long now = Stopwatch.GetTimestamp();
+                double elapsedSec = Math.Max(0.001, (double)(now - startTime) / freq);
+                long processedInThisFile = currentVerifyPos - startVerifyPos;
+                double bytesPerSec = processedInThisFile / elapsedSec;
+                double remainingBytes = Math.Max(0, totalVerifySize - currentVerifyPos);
+                double etaSec = bytesPerSec > 1024 ? remainingBytes / bytesPerSec : 0;
+                var elapsed = System.TimeSpan.FromSeconds(elapsedSec);
+                double totalEtaRaw = elapsedSec + etaSec;
+                if (double.IsInfinity(totalEtaRaw) || totalEtaRaw > 8640000) totalEtaRaw = elapsedSec;
+                var totalEta = System.TimeSpan.FromSeconds(totalEtaRaw);
 
-                currentVerifyPos += data.Length;
+                int pct = totalVerifySize > 0
+                    ? (int)Math.Min(100, currentVerifyPos * 100 / totalVerifySize)
+                    : 0;
 
-                if (reportSw.ElapsedMilliseconds >= 100)
-                {
-                    int pct = totalVerifySize > 0
-                        ? (int)Math.Min(100, currentVerifyPos * 100 / totalVerifySize)
-                        : 0;
+                var r = NSW.Utils.Common.CalculateProgress(currentVerifyPos, totalVerifySize, label);
+                progress?.Report(new ProgressInfo(
+                    pct,
+                    $"Decompressing and hashing... {r.label}",
+                    titleId,
+                    $"{(bytesPerSec / (1024.0 * 1024.0)):F1} MiB/s",
+                    $"{elapsed:mm\\:ss} / {totalEta:mm\\:ss}"
+                ));
 
-                    var r = NSW.Utils.Common.CalculateProgress(currentVerifyPos, totalVerifySize, label);
-                    progress?.Report((pct, $"Decompressing and hashing... {r.label}"));
-                    reportSw.Restart();
-                }
+                reportSw.Restart();
             }
+        }
 
-            readTask.Wait(ct);
-        }
-        catch (OperationCanceledException) { /* 취소 처리 */ }
-        finally
-        {
-            dataQueue.Dispose();
-        }
+        await readTask;
 
         sha256.TransformFinalBlock([], 0, 0);
 
@@ -209,30 +198,6 @@ public class NcaToNczConverter(KeySet keySet)
             output.Write(s.CryptoKey);
             output.Write(s.CryptoCounter);
         }
-    }
-
-    private static Compressor BuildCompressor(int compressionLevel, bool multiThread)
-    {
-        var compressor = new Compressor(compressionLevel);
-
-        if (compressionLevel <= 3)
-        {
-            compressor.SetParameter(ZSTD_cParameter.ZSTD_c_enableLongDistanceMatching, 0);
-            compressor.SetParameter(ZSTD_cParameter.ZSTD_c_windowLog, 20);
-        }
-        else if (compressionLevel <= 12)
-        {
-            compressor.SetParameter(ZSTD_cParameter.ZSTD_c_enableLongDistanceMatching, 0);
-            compressor.SetParameter(ZSTD_cParameter.ZSTD_c_windowLog, 20);
-        }
-        else
-        {
-            compressor.SetParameter(ZSTD_cParameter.ZSTD_c_enableLongDistanceMatching, 0);
-            compressor.SetParameter(ZSTD_cParameter.ZSTD_c_windowLog, 20);
-        }
-
-        compressor.SetParameter(ZSTD_cParameter.ZSTD_c_nbWorkers, 0);
-        return compressor;
     }
 
     private static List<NczSectionRaw> CollectSections(Nca nca)

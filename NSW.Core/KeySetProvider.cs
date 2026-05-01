@@ -13,18 +13,9 @@ public sealed class KeySetProvider
 
     private KeySetProvider()
     {
-        string path;
+        string KeysPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, KeyFileName);
 
-        if (OperatingSystem.IsAndroid())
-            path = $"/sdcard/Download/{KeyFileName}";
-        else
-        {
-            string defaultKeysPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".switch", KeyFileName);
-            string KeysPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, KeyFileName);
-            path = File.Exists(defaultKeysPath) ? defaultKeysPath : KeysPath;
-        }
-
-        if (File.Exists(path))
-            KeySet = ExternalKeyReader.ReadKeyFile(path);
+        if (File.Exists(KeysPath))
+            KeySet = ExternalKeyReader.ReadKeyFile(KeysPath);
     }
 }

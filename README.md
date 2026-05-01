@@ -1,5 +1,5 @@
 <p align="right">
-🇺🇸 English | <a href="README_KR.md">🇰🇷 한국어</a>
+🇺🇸 English | <a href="README.ko.md">🇰🇷 한국어</a>
 </p>
 
 ---

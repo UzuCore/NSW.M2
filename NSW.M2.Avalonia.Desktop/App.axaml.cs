@@ -3,7 +3,6 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using NSW.M2.Avalonia.ViewModels;
 using NSW.M2.Avalonia.Views;
-using System.Globalization;
 
 namespace NSW.M2.Avalonia.Desktop;
 

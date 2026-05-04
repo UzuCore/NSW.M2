@@ -1,5 +1,6 @@
 ﻿using LibHac.Common.Keys;
 using LibHac.Crypto;
+using LibHac.Fs;
 using LibHac.NSZ.Streams;
 using LibHac.NSZ.Utils;
 using LibHac.Tools.FsSystem;
@@ -7,7 +8,6 @@ using LibHac.Tools.FsSystem.NcaUtils;
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
-using static System.Collections.Specialized.BitVector32;
 
 namespace LibHac.NSZ;
 
@@ -18,7 +18,12 @@ public class Ncz : Nca
 
     public Ncz(KeySet keySet, Stream nczStream, NczReadMode readMode) : this(keySet, nczStream, readMode, Initialize(nczStream, readMode, keySet, out var nczToNcaStream), nczToNcaStream)
     {
+    
+    }
 
+    public Ncz(KeySet keySet, IStorage nczStorage, NczReadMode readMode)
+    : this(keySet, nczStorage.AsStream(), readMode)
+    {
     }
 
     private Ncz(KeySet keySet, Stream nczStream, NczReadMode readMode, NczHeader nczHeader, NczToNcaStream originalNczToNcaStream) : base(keySet, originalNczToNcaStream.AsStorage())
@@ -189,7 +194,7 @@ public class NczHeader
             nczHeader.Sections[i] = new NczSection(section);
             ncaSize += section.Size;
         }
-        nczHeader.NcaSize = ncaSize;
+        nczHeader.NcaSize = nczHeader.Sections[^1].Offset + nczHeader.Sections[^1].Size;
 
         var blockMagic = nczBinaryReader.ReadAsciiString(8);
         const string NCZ_BLOCK_MAGIC = "NCZBLOCK";

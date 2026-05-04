@@ -754,6 +754,24 @@ namespace NSW.Core.Properties {
         }
         
         /// <summary>
+        ///   Sequential Access (Space Priority)과(와) 유사한 지역화된 문자열을 찾습니다.
+        /// </summary>
+        public static string ToolTip_BlocklessMode {
+            get {
+                return ResourceManager.GetString("ToolTip_BlocklessMode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Random Access (Speed Priority)과(와) 유사한 지역화된 문자열을 찾습니다.
+        /// </summary>
+        public static string ToolTip_BlockMode {
+            get {
+                return ResourceManager.GetString("ToolTip_BlockMode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Select Output Folder과(와) 유사한 지역화된 문자열을 찾습니다.
         /// </summary>
         public static string ToolTip_BrowseOutput {

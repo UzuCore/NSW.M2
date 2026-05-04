@@ -7,8 +7,12 @@ public static class Common
 {
     public static string FormatFileSize(long bytes)
     {
-        if (bytes >= 1_073_741_824) return $"{bytes / 1_073_741_824.0:F1} GB";
-        if (bytes >= 1_048_576) return $"{bytes / 1_048_576.0:F1} MB";
+        if (bytes >= 1_073_741_824) 
+            return $"{bytes / 1_073_741_824.0:F1} GB";
+
+        if (bytes >= 1_048_576) 
+            return $"{bytes / 1_048_576.0:F1} MB";
+
         return $"{bytes / 1024.0:F1} KB";
     }
 
@@ -16,7 +20,6 @@ public static class Common
     {
         double currentMiB = (double)readBytes / 1024 / 1024;
         double totalMiB = (double)totalBytes / 1024 / 1024;
-
         int pct = totalBytes > 0 ? Math.Min(100, (int)((double)readBytes / totalBytes * 100)): 0;
         string formattedLabel = $"{label} ({currentMiB:N0}MiB / {totalMiB:N2}MiB)";
 
@@ -47,16 +50,17 @@ public static class Common
         return filePath;
     }
 
-    public static async Task CopyStreamAsync(Stream src, Stream dst, CancellationToken ct, Action<long>? onRead = null)
+    public static async Task CopyStreamAsync(Stream src, Stream dst, Action<long>? onRead = null, CancellationToken ct = default)
     {
         const int bufferSize = 81920;
         byte[] buf = ArrayPool<byte>.Shared.Rent(bufferSize);
+
         try
         {
             int read;
-            while ((read = await src.ReadAsync(buf, 0, bufferSize, ct)) > 0)
+            while ((read = await src.ReadAsync(buf.AsMemory(0, bufferSize), ct)) > 0)
             {
-                await dst.WriteAsync(buf, 0, read, ct);
+                await dst.WriteAsync(buf.AsMemory(0, read), ct);
                 onRead?.Invoke(read);
             }
         }

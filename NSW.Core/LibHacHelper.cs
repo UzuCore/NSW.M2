@@ -14,6 +14,7 @@ using LibHac.Tools.Ncm;
 using NSW.Core.Models;
 using System.Diagnostics;
 using System.Globalization;
+
 using static LibHac.Ns.ApplicationControlProperty;
 
 namespace NSW.Core;
@@ -21,15 +22,6 @@ namespace NSW.Core;
 public static class LibHacHelper
 {
     private static readonly string[] sourceArray = ["B", "U", "D"];
-
-    public static string GetContentMetaTypeTag(ContentMetaType type) => type switch
-    {
-        ContentMetaType.Application => "Base",
-        ContentMetaType.Patch => "Update",
-        ContentMetaType.AddOnContent => "DLC",
-        ContentMetaType.Delta => "DLC",
-        _ => "?"
-    };
 
     public static Language Current
     {
@@ -46,21 +38,33 @@ public static class LibHacHelper
                 "ja" => Language.Japanese,
                 "ko" => Language.Korean,
                 "ru" => Language.Russian,
-                "zh" => GetChineseVariant(),
+                "zh" => GetChineseVariant,
                 _ => Language.AmericanEnglish
             };
         }
     }
 
-    private static Language GetChineseVariant()
+    private static Language GetChineseVariant
     {
-        var culture = CultureInfo.CurrentUICulture.Name;
+        get
+        {
+            var culture = CultureInfo.CurrentUICulture.Name;
 
-        if (culture.StartsWith("zh-TW") || culture.StartsWith("zh-HK"))
-            return Language.TraditionalChinese;
+            if (culture.StartsWith("zh-TW") || culture.StartsWith("zh-HK"))
+                return Language.TraditionalChinese;
 
-        return Language.SimplifiedChinese;
+            return Language.SimplifiedChinese;
+        }
     }
+
+    public static string GetContentMetaTypeTag(ContentMetaType type) => type switch
+    {
+        ContentMetaType.Application => "Base",
+        ContentMetaType.Patch => "Update",
+        ContentMetaType.AddOnContent => "DLC",
+        ContentMetaType.Delta => "DLC",
+        _ => "?"
+    };
 
     public static IFileSystem OpenFileSystem(this LocalStorage storage, KeySet ks, string path)
     {
@@ -319,7 +323,7 @@ public static class LibHacHelper
         if (!string.IsNullOrWhiteSpace(title.NameString.ToString().Trim('\0')))
             return (title.NameString.ToString().Trim('\0'), title.PublisherString.ToString().Trim('\0'), Language.AmericanEnglish);
 
-        for (int i = 0; i < 18; i++)
+        for (int i = 0; i < Constants.LanguageCount; i++)
         {
             var t = control.Title[i];
             var name = t.NameString.ToString().Trim('\0');

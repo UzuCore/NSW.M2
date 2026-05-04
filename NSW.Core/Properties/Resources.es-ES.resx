@@ -369,4 +369,10 @@
   <data name="Log_StatusValidating" xml:space="preserve">
     <value>Validando...</value>
   </data>
+  <data name="ToolTip_BlockMode" xml:space="preserve">
+    <value>Acceso aleatorio (prioridad de velocidad)</value>
+  </data>
+  <data name="ToolTip_BlocklessMode" xml:space="preserve">
+    <value>Acceso secuencial (prioridad de espacio)</value>
+  </data>
 </root>

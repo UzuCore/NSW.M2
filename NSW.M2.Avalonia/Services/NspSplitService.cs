@@ -62,13 +62,15 @@ public static class NspSplitService
             foreach(var meta in allMetas)
             {                
                 ct.ThrowIfCancellationRequested();
+
                 if (ProcessSplitItem(meta, allFiles, keySet, cachedBaseTitle, outputDir, index, groupCount, progress, log, ct))
                     successCount++;
             }
         }
         finally
         {
-            for (int i = disposables.Count - 1; i >= 0; i--) disposables[i]?.Dispose();
+            for (int i = disposables.Count - 1; i >= 0; i--) 
+                disposables[i]?.Dispose();
         }
 
         return successCount;
@@ -92,7 +94,7 @@ public static class NspSplitService
                 .ToArray();
 
             foreach (var c in invalidChars)
-                outName = outName.Replace(c.ToString(), "");
+                outName = outName.Replace(c.ToString(), string.Empty);
 
             outName = Regex.Replace(outName, @"\s+", " ").Trim();
 
@@ -100,12 +102,16 @@ public static class NspSplitService
             string titleIdHex = meta.TitleId.ToUpper();
 
             var tikName = allFiles.Keys.FirstOrDefault(k => k.EndsWith(".tik") && k.Contains(titleIdHex, StringComparison.OrdinalIgnoreCase));
+
             if (tikName != null) builder.AddFile(tikName, allFiles[tikName].AsFile(OpenMode.Read));
 
             var certName = allFiles.Keys.FirstOrDefault(k => k.EndsWith(".cert") && k.Contains(titleIdHex, StringComparison.OrdinalIgnoreCase));
+
             if (certName != null) builder.AddFile(certName, allFiles[certName].AsFile(OpenMode.Read));
 
-            if (!allFiles.ContainsKey(meta.FileName)) return false;
+            if (!allFiles.ContainsKey(meta.FileName)) 
+                return false;
+
             string cnmtNcaName = meta.FileName;
 
             builder.AddFile(cnmtNcaName, allFiles[cnmtNcaName].AsFile(OpenMode.Read));
@@ -114,9 +120,10 @@ public static class NspSplitService
             var nca = new Nca(keySet, ncaStorage);
             using var cnmtFs = nca.OpenFileSystem(NcaSectionType.Data, IntegrityCheckLevel.None);
             var entry = cnmtFs.EnumerateEntries("/", "*.cnmt").First();
-
             using var cFile = new UniqueRef<IFile>();
+
             cnmtFs.OpenFile(ref cFile.Ref, entry.FullPath.ToU8Span(), OpenMode.Read).ThrowIfFailure();
+
             var cnmt = new Cnmt(cFile.Get.AsStream());
 
             foreach (var record in cnmt.ContentEntries)
@@ -150,6 +157,7 @@ public static class NspSplitService
         catch (Exception ex)
         {
             log?.Invoke($"{string.Format(Res.Log_SplitFailed, meta.TitleId, ex.Message)} ({ index}/{ groupCount})", LogLevel.Error, meta.TitleId);
+
             return false;
         }
     }
@@ -158,10 +166,8 @@ public static class NspSplitService
     {
         bool isCompleted = false;
         string displayName = NspNameBuilder.DisplayNameBuild(meta.EnTitle, meta.TitleId, meta.DisplayVersion);
-
         const int bufferSize = 0x800000;
         byte[] buffer = ArrayPool<byte>.Shared.Rent(bufferSize);
-
         var reportSw = System.Diagnostics.Stopwatch.StartNew();
         var startTime = System.Diagnostics.Stopwatch.GetTimestamp();
         double freq = System.Diagnostics.Stopwatch.Frequency;
@@ -169,12 +175,12 @@ public static class NspSplitService
         try
         {
             using var nspStorage = builder.Build(PartitionFileSystemType.Standard);
-            nspStorage.GetSize(out long size);
 
+            nspStorage.GetSize(out long size);
             outPath = Common.GetUniqueFilePath(outPath);
+
             using var fout = File.Open(outPath, FileMode.Create, FileAccess.Write);
             using var nspStream = nspStorage.AsStream();
-
             long totalRead = 0;
 
             while (totalRead < size)
@@ -184,7 +190,8 @@ public static class NspSplitService
                 int toRead = (int)Math.Min(bufferSize, size - totalRead);
                 int read = nspStream.Read(buffer, 0, toRead);
 
-                if (read <= 0) break;
+                if (read <= 0) 
+                    break;
 
                 fout.Write(buffer, 0, read);
                 totalRead += read;
@@ -193,25 +200,21 @@ public static class NspSplitService
                 {
                     long now = System.Diagnostics.Stopwatch.GetTimestamp();
                     double elapsedSec = (now - startTime) / freq;
-
                     double bytesPerSec = elapsedSec > 0 ? totalRead / elapsedSec : 0;
                     double mibPerSec = bytesPerSec / (1024.0 * 1024.0);
-
                     double remainingBytes = size - totalRead;
                     double etaSec = bytesPerSec > 0 ? remainingBytes / bytesPerSec : 0;
-
                     var elapsed = TimeSpan.FromSeconds(elapsedSec);
                     var totalEta = TimeSpan.FromSeconds(elapsedSec + Math.Max(0, etaSec));
-
                     var r = Common.CalculateProgress(totalRead, size, displayName);
                     int pct = size > 0 ? (int)(totalRead * 100 / size) : 0;
 
                     progress?.Report(new ProgressInfo(
-                        Percent: pct,
-                        Label: $"{Res.Log_Splitting} {r.label} {typeTag}",
-                        TitleId: meta.TitleId,
-                        Speed: $"{mibPerSec:F1} MiB/s",
-                        TimeInfo: $"{elapsed:mm\\:ss} / {totalEta:mm\\:ss}"
+                        pct,
+                        $"{Res.Log_Splitting} {r.label} {typeTag}",
+                        meta.TitleId,
+                        $"{mibPerSec:F1} MiB/s",
+                        $"{elapsed:mm\\:ss} / {totalEta:mm\\:ss}"
                     ));
 
                     reportSw.Restart();
@@ -230,7 +233,10 @@ public static class NspSplitService
             ArrayPool<byte>.Shared.Return(buffer);
 
             if (!isCompleted && File.Exists(outPath))
-                try { File.Delete(outPath); } catch { }
+                try { 
+                    File.Delete(outPath); 
+                } 
+                catch { }
         }
     }
 }

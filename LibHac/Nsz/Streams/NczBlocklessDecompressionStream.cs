@@ -135,7 +135,7 @@ public class NczBlocklessDecompressionStream : Stream
         set
         {
             ArgumentOutOfRangeException.ThrowIfNegative(value);
-            ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(value, Length);
+            ArgumentOutOfRangeException.ThrowIfGreaterThan(value, Length);
 
             _requestedPosition = value;
         }

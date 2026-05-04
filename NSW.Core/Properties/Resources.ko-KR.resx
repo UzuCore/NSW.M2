@@ -369,4 +369,10 @@
   <data name="Log_StatusValidating" xml:space="preserve">
     <value>검증 중...</value>
   </data>
+  <data name="ToolTip_BlockMode" xml:space="preserve">
+    <value>랜덤 액세스 (속도 우선)</value>
+  </data>
+  <data name="ToolTip_BlocklessMode" xml:space="preserve">
+    <value>순차 액세스 (용량 우선)</value>
+  </data>
 </root>

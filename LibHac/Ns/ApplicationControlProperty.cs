@@ -187,6 +187,19 @@ public struct ApplicationControlProperty
         BrazilianPortuguese = 15,
         Polish = 16,
         Thai = 17,
+        Indonesian = 18,
+        Romanian = 19,
+        Vietnamese = 20,
+        Arabic = 21,
+        Ukrainian = 22,
+        Czech = 23,
+        Slovak = 24,
+        Greek = 25,
+        Hungarian = 26,
+        Norwegian = 27,
+        Finnish = 28,
+        Swedish = 29,
+        Danish = 30,
     }
 
     public static readonly string[] LanguageCodes =
@@ -204,11 +217,24 @@ public struct ApplicationControlProperty
         "pt",
         "ru",
         "ko",
-        "zh-Hans",
         "zh-Hant",
+        "zh-Hans",
         "pt-BR",
         "pl",
-        "th"
+        "th",
+        "id",
+        "ro",
+        "vi",
+        "ar",
+        "uk",
+        "cs",
+        "sk",
+        "el",
+        "hu",
+        "no",
+        "fi",
+        "sv",
+        "da"
     ];
 
     [SuppressMessage("ReSharper", "InconsistentNaming")]

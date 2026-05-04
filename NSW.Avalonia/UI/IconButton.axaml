@@ -1,0 +1,45 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:NSW.Avalonia.UI"
+			 xmlns:conv="clr-namespace:NSW.Avalonia.Converters"
+             x:Class="NSW.Avalonia.UI.IconButton"
+             x:DataType="local:IconButton"
+             x:Name="Root">
+
+	<Button x:Name="InnerButton"
+            HorizontalAlignment="Stretch"
+            VerticalAlignment="Stretch"
+            HorizontalContentAlignment="Center"
+            VerticalContentAlignment="Center"
+            Height="44" Padding="10,0"
+            Classes.is-running="{Binding #Root.IsRunning}">
+
+		<StackPanel Orientation="Horizontal"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+			<Image Width="32" Height="32"
+                   Margin="0,0,10,0"
+                   VerticalAlignment="Center"
+                   RenderOptions.BitmapInterpolationMode="HighQuality">
+				<Image.Source>
+					<MultiBinding Converter="{x:Static conv:IconConverter.Instance}">
+						<Binding Path="#Root.IsRunning"/>
+						<Binding Path="#Root.DefaultIcon"/>
+						<Binding Path="#Root.CancelIcon"/>
+					</MultiBinding>
+				</Image.Source>
+			</Image>
+
+			<TextBlock VerticalAlignment="Center"
+                       FontSize="12">
+				<TextBlock.Text>
+					<MultiBinding Converter="{x:Static conv:TextToggleConverter.Instance}">
+						<Binding Path="#Root.IsRunning"/>
+						<Binding Path="#Root.DefaultText"/>
+						<Binding Path="#Root.CancelText"/>
+					</MultiBinding>
+				</TextBlock.Text>
+			</TextBlock>
+		</StackPanel>
+	</Button>
+</UserControl>

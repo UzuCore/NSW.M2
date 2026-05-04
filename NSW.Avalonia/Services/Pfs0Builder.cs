@@ -1,6 +1,4 @@
-﻿using Avalonia.Controls;
-using NSW.Avalonia.Models;
-using NSW.Core;
+﻿using NSW.Avalonia.Models;
 using NSW.Utils;
 using System;
 using System.Collections.Generic;
@@ -17,10 +15,6 @@ namespace NSW.Avalonia.Services;
 public static class Pfs0Builder
 {
     private const uint MagicPfs0 = 0x30534650;
-    public const int ExefsHashBlockSize = 0x10000;
-    public const int LogoHashBlockSize = 0x1000;
-    public const int MetaHashBlockSize = 0x1000;
-    public const int PaddingSize = 0x200;
 
     public static async Task WriteAsync(string displayName, string titleId, IEnumerable<(string Name, Func<Stream, Action<long>, Task> Writer, long EstimatedSize, string Label)> files, Stream outputStream, IProgress<ProgressInfo>? progress = null, CancellationToken ct = default)
     {
@@ -28,9 +22,9 @@ public static class Pfs0Builder
             throw new InvalidOperationException("outputStream must be seekable");
 
         var fileList = files.ToList();
-
         var stringTable = new List<byte>();
         var stringOffsets = new List<uint>();
+
         foreach (var (name, _, _, _) in fileList)
         {
             stringOffsets.Add((uint)stringTable.Count);
@@ -52,6 +46,7 @@ public static class Pfs0Builder
         WriteStruct(outputStream, header);
 
         long entryTablePos = outputStream.Position;
+
         for (int i = 0; i < fileList.Count; i++)
         {
             WriteStruct(outputStream, new Pfs0FileEntry
@@ -70,10 +65,8 @@ public static class Pfs0Builder
         string currentLabel = string.Empty;
         var reportSw = Stopwatch.StartNew();
         var startTime = Stopwatch.GetTimestamp();
-
         var window = new Queue<(long ts, long written)>();
         const double windowSec = 10.0;
-
         var reportLock = new object();
 
         void ReportProgress(bool force = false)
@@ -84,8 +77,8 @@ public static class Pfs0Builder
 
                 long now = Stopwatch.GetTimestamp();
                 window.Enqueue((now, totalWritten));
-
                 double freq = Stopwatch.Frequency;
+
                 while (window.Count > 1 && (now - window.Peek().ts) / freq > windowSec)
                     window.Dequeue();
 
@@ -97,7 +90,6 @@ public static class Pfs0Builder
                     var (ts, written) = window.Peek();
                     double secSpan = (now - ts) / freq;
                     long bytesSpan = totalWritten - written;
-
                     double avgSpeed = totalWritten / ((now - startTime) / freq);
                     double windowSpeed = secSpan > 0 ? bytesSpan / secSpan : 0;
                     double progressRatio = totalEstimated > 0 ? (double)totalWritten / totalEstimated : 0;
@@ -110,9 +102,9 @@ public static class Pfs0Builder
                 double elapsedSec = (now - startTime) / freq;
                 var elapsed = TimeSpan.FromSeconds(elapsedSec);
                 var totalEta = TimeSpan.FromSeconds(elapsedSec + Math.Max(0, etaSec));
-
                 int pct = totalEstimated > 0 ? (int)(totalWritten * 100 / totalEstimated) : 0;
                 var r = Common.CalculateProgress(totalWritten, totalEstimated, displayName);
+
                 progress?.Report(new ProgressInfo(pct, r.label, titleId, $"{mibPerSec:F1} MiB/s", $"{elapsed:mm\\:ss} / {totalEta:mm\\:ss}"));
                 reportSw.Restart();
             }
@@ -128,8 +120,8 @@ public static class Pfs0Builder
         var actualOffsets = new ulong[fileList.Count];
         var actualSizes = new ulong[fileList.Count];
         ulong relOffset = 0;
-
         using var timer = new System.Timers.Timer(200);
+
         timer.Elapsed += (_, _) => ReportProgress(force: true);
         timer.AutoReset = true;
         timer.Start();

@@ -1,74 +1,11 @@
-﻿using System;
-using System.IO;
-using System.Diagnostics;
+﻿namespace NSW.M2.Avalonia.Services;
 
-namespace NSW.M2.Avalonia.Services;
-
-public class AppConfig
+public class AppConfig: NSW.Avalonia.Services.BaseConfig
 {
-    private static string DefaultFilePath
+    protected override void DefaultSettings()
     {
-        get
-        {
-            using var process = Process.GetCurrentProcess();
-            string? exePath = process.MainModule?.FileName;
-            
-            return Path.ChangeExtension(exePath, "config.json");
-        }
-    }
+        base.DefaultSettings();
 
-    private static readonly Lazy<AppConfig> _instance = new(() => Load());
-    public static AppConfig Instance => _instance.Value;
-
-    private int _compressLevel = 0;
-
-    public int CompressLevel
-    {
-        get => _compressLevel;
-        set => _compressLevel = value;
-    }
-
-    public bool VerifyCompress { get; set; } = false;
-
-    private AppConfig() { }
-
-    private static AppConfig Load()
-    {
-        string path = DefaultFilePath;
-        var config = new AppConfig();
-
-        if (!File.Exists(path))
-        {
-            config.Save();
-            return config;
-        }
-
-        try
-        {
-            var lines = File.ReadAllLines(path);
-            foreach (var line in lines)
-            {
-                var trimmed = line.Trim().Replace("\"", "").Replace(",", "");
-                if (trimmed.Contains("CompressLevel:"))
-                    config.CompressLevel = int.Parse(trimmed.Split(':')[1].Trim());
-                else if (trimmed.Contains("VerifyCompress:"))
-                    config.VerifyCompress = bool.Parse(trimmed.Split(':')[1].Trim());
-            }
-        }
-        catch
-        {
-            config.Save();
-        }
-        return config;
-    }
-
-    public void Save()
-    {
-        string path = DefaultFilePath;
-        var content = $"{{\n" +
-                      $"  \"CompressLevel\": {CompressLevel},\n" +
-                      $"  \"VerifyCompress\": {VerifyCompress.ToString().ToLower()}\n" +
-                      $"}}";
-        File.WriteAllText(path, content);
+        this.CompressLevel = 2;
     }
 }

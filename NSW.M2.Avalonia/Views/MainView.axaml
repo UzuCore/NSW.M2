@@ -13,23 +13,21 @@
 
 		<UserControl.Resources>
 			<conv:LevelToColorConverter x:Key="LevelToColorConverter"/>
+			<conv:CompressLevelTextConverter x:Key="CompressLevelTextConverter"/>
 		</UserControl.Resources>
 
 		<UserControl.Styles>
 
-        <!-- ToggleButton 색 -->
-        <Style Selector="ToggleButton#tbVerify:checked">
+        <Style Selector="ToggleButton#tbValidation:checked">
             <Setter Property="Background" Value="#334CAF50"/>
             <Setter Property="BorderBrush" Value="#4CAF50"/>
         </Style>
 
-        <!-- 체크 시 이미지 변경 -->
-        <Style Selector="ToggleButton#tbVerify:checked Image#imgVerify">
+        <Style Selector="ToggleButton#tbValidation:checked Image#imgValidation">
             <Setter Property="Source" Value="/Assets/Images/Checked.png"/>
         </Style>
 
-        <!-- 체크 해제 이미지 -->
-        <Style Selector="ToggleButton#tbVerify:not(:checked) Image#imgVerify">
+        <Style Selector="ToggleButton#tbValidation:not(:checked) Image#imgValidation">
             <Setter Property="Source" Value="/Assets/Images/Unchecked.png"/>
         </Style>
 
@@ -45,22 +43,21 @@
 				<RowDefinition Height="*"/>
 			</Grid.RowDefinitions>
 
-			<ui:FileManagerControl x:Name="FileMgr"
-                                   Grid.Row="0"
-                                   Height="250"
-                                   Margin="0,0,0,16"/>
+			<ui:FileManagerControl x:Name="fileMgr" Grid.Row="0" Height="250" Margin="0,0,0,16"/>
 
 			<Grid Grid.Row="1" Margin="0,0,0,16" ColumnDefinitions="36, Auto, *, Auto">
-				<Button Grid.Column="0" 
+				
+				<Button Grid.Column="0"
 						x:Name="btnWorkSpace"
 						Width="36" Height="36"
 						Padding="0"
 						Background="Transparent"
 						BorderThickness="0"
 						ToolTip.Tip="{x:Static l:Resources.ToolTip_OpenWorkSpace}"
-						Click="BtnWorkSpace_Click">
+						Command="{Binding OpenWorkSpaceCommand}">
 					<Image Source="/Assets/Images/WorkSpace.png" Stretch="Uniform" RenderOptions.BitmapInterpolationMode="HighQuality" />
-				</Button>				
+				</Button>
+				
 				<TextBlock Grid.Column="1" Text="{x:Static l:Resources.Label_OutputPath}"
                            FontSize="12"
                            Margin="12,0,12,0"
@@ -73,30 +70,24 @@
                         BorderBrush="#30FFFFFF"
                         BorderThickness="1"
                         CornerRadius="6">
-					<Panel>
-						<TextBox x:Name="txtOutput"
-								 FontSize="11"
-                                 Background="Transparent"
-                                 BorderThickness="0"
-                                 Foreground="#DCDCDC"
-                                 VerticalContentAlignment="Center"
-                                 Padding="10,0"
-                                 Height="36"/>
-						<TextBlock x:Name="outputHint"
-                                   Text="{x:Static l:Resources.Hint_SelectOutput}"
-                                   Foreground="#50FFFFFF"
-                                   FontSize="11"
-                                   VerticalAlignment="Center"
-                                   Margin="12,0,0,0"
-                                   IsHitTestVisible="False"/>
-					</Panel>
+					
+					<TextBox x:Name="txtOutput"
+							 FontSize="11"
+							 Background="Transparent"
+							 BorderThickness="0"
+							 Foreground="#DCDCDC"
+							 VerticalContentAlignment="Center"
+							 Padding="10,0"
+							 Text="{Binding OutputPath, Mode=TwoWay}"
+							 Height="36"
+							 Watermark="{x:Static l:Resources.Hint_SelectOutput}"/>
 				</Border>
 
 				<Button Grid.Column="3" x:Name="btnBrowseOutput"
                         ToolTip.Tip="{x:Static l:Resources.ToolTip_BrowseOutput}"
                         Width="36" Height="36" Padding="0"
                         Background="Transparent" BorderThickness="0"
-                        HorizontalContentAlignment="Center"						
+                        HorizontalContentAlignment="Center"
                         VerticalContentAlignment="Center"
                         Click="BtnBrowseOutput_Click">
 					<Image Source="/Assets/Images/OpenFolder.png" Stretch="Uniform" RenderOptions.BitmapInterpolationMode="HighQuality" />
@@ -108,56 +99,93 @@
 				<Image Grid.Column="0"
 					   Source="/Assets/Images/Level.png"
 					   Stretch="Uniform" Width="32" Margin="0,0,8,0"
+					   ToolTip.Tip="{x:Static l:Resources.ToolTip_CompressLevel}"
 					   RenderOptions.BitmapInterpolationMode="HighQuality" />
 
 				<Slider Grid.Column="1"
 						x:Name="sliderCompression"
-						Minimum="0" Maximum="18"
+						Minimum="2" Maximum="18"
 						Value="{Binding CompressLevel}"
 						SmallChange="1" LargeChange="1"
 						IsSnapToTickEnabled="True"
 						TickFrequency="1"
+						ToolTip.Tip="{x:Static l:Resources.ToolTip_CompressLevel}"
 						VerticalAlignment="Center"/>
 
 				<TextBlock Grid.Column="2"
-						   Text="{Binding #sliderCompression.Value}"
+						   Text="{Binding #sliderCompression.Value, Converter={StaticResource CompressLevelTextConverter}}"
 						   Foreground="{Binding #sliderCompression.Value, Converter={StaticResource LevelToColorConverter}}"
 						   FontWeight="Bold"
 						   VerticalAlignment="Center"
-						   Width="25"
-						   Margin="0,0,0,0"
+						   Margin="10,0,0,0"
+						   ToolTip.Tip="{x:Static l:Resources.ToolTip_CompressLevel}"
 						   TextAlignment="Center"/>
 
+				<Border Grid.Column="3"
+						Background="#12FFFFFF"
+						BorderBrush="#30FFFFFF"
+						BorderThickness="1"
+						CornerRadius="6"
+						Padding="6,0"
+						Margin="8,0"
+						Height="44"
+						IsVisible="{Binding IsCompressionOptionVisible}"
+						VerticalAlignment="Stretch">
+					
+					<StackPanel Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
+						<RadioButton x:Name="rbBlock"
+									 Content="Block"
+									 GroupName="BlockMode"
+									 IsChecked="{Binding UseBlockMode}"
+									 FontSize="11"
+									 ToolTip.Tip="{x:Static l:Resources.ToolTip_BlockMode}"
+									 VerticalAlignment="Center"/>
+						<RadioButton x:Name="rbBlockless"
+									 Content="Blockless"
+									 GroupName="BlockMode"
+									 IsChecked="{Binding UseBlocklessMode}"
+									 FontSize="11"
+									 ToolTip.Tip="{x:Static l:Resources.ToolTip_BlocklessMode}"
+									 Margin="5,0,0,0"
+									 VerticalAlignment="Center"/>
+					</StackPanel>
+				</Border>
+
 				<ToggleButton Grid.Column="4"
-							  x:Name="tbVerify"
-							  IsChecked="{Binding VerifyCompress}"
+							  x:Name="tbValidation"
+							  IsChecked="{Binding IsValidationEnabled}"
 							  Height="44" Padding="10,0"
 							  Background="#12FFFFFF"
 							  BorderBrush="#30FFFFFF"
 							  BorderThickness="1"
 							  CornerRadius="6"
+							  IsVisible="{Binding IsCompressionOptionVisible}"
+							  ToolTip.Tip="{x:Static l:Resources.ToolTip_ValidateCompress}"
 							  VerticalAlignment="Stretch">
 
 					<StackPanel Orientation="Horizontal">
-						<Image x:Name="imgVerify"
-							   Width="20" Height="20" Margin="0,0,10,0"/>
+						<Image x:Name="imgValidation" Width="20" Height="20" Margin="0,0,10,0"/>
 						<TextBlock Text="{x:Static l:Resources.Button_Validate}" VerticalAlignment="Center" FontSize="12"/>
 					</StackPanel>
 				</ToggleButton>
 
-				<Button Grid.Column="6" x:Name="btnMergeStart" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Height="44" FontSize="12" Click="BtnMergeStart_Click">
-					<StackPanel Orientation="Horizontal">
-						<Image x:Name="imgMerge" Width="32" Height="32" Margin="0,0,10,0" VerticalAlignment="Center" RenderOptions.BitmapInterpolationMode="HighQuality"/>
-						<TextBlock x:Name="tbMergeText" Text="Merge" VerticalAlignment="Center"/>
-					</StackPanel>
-				</Button>
+				<ui:IconButton Grid.Column="6"
+							   x:Name="btnMergeStart"
+							   DefaultText="{x:Static l:Resources.Button_MergeStart}"
+							   DefaultIcon="avares://NSW.M2.Avalonia/Assets/Images/Merge.png"
+							   CancelText="{x:Static l:Resources.Button_Cancel}"
+							   CancelIcon="avares://NSW.M2.Avalonia/Assets/Images/Cancel.png"
+							   IsRunning="{Binding IsMerging}"
+							   Click="BtnMergeStart_Click" />
 
-				<Button Grid.Column="8" x:Name="btnSplitStart" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Height="44" FontSize="12" Click="BtnSplitStart_Click">
-					<StackPanel Orientation="Horizontal">
-						<Image x:Name="imgSplit" Width="32" Height="32" Margin="0,0,10,0" VerticalAlignment="Center" RenderOptions.BitmapInterpolationMode="HighQuality"/>
-						<TextBlock x:Name="tbSplitText" Text="Split" VerticalAlignment="Center"/>
-					</StackPanel>
-				</Button>
+				<ui:IconButton Grid.Column="8"
+							   x:Name="btnSplitStart"
+							   DefaultText="{x:Static l:Resources.Button_SplitStart}"
+							   DefaultIcon="avares://NSW.M2.Avalonia/Assets/Images/Split.png"
+							   CancelText="{x:Static l:Resources.Button_Cancel}"
+							   CancelIcon="avares://NSW.M2.Avalonia/Assets/Images/Cancel.png"
+							   IsRunning="{Binding IsSplitting}"
+							   Click="BtnSplitStart_Click" />
 			</Grid>
 
 			<Grid Grid.Row="3" Margin="0,0,0,10" x:Name="progressArea" IsVisible="False">
@@ -178,16 +206,8 @@
 
 			<Border Grid.Row="4" Background="#12FFFFFF" BorderBrush="#30FFFFFF" BorderThickness="1" CornerRadius="8" Padding="2">
 				<Grid>
-					<ScrollViewer x:Name="svLogBox"
-								  HorizontalScrollBarVisibility="Disabled"
-								  VerticalScrollBarVisibility="Auto"
-								  ZIndex="0">
-						<SelectableTextBlock x:Name="logBox"
-											 FontSize="11"
-											 Foreground="#C8C8C8"
-											 Background="Transparent"
-											 Padding="8,6"
-											 TextWrapping="Wrap"/>
+					<ScrollViewer x:Name="svLogBox" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" ZIndex="0">
+						<SelectableTextBlock x:Name="logBox" FontSize="11" Foreground="#C8C8C8" Background="Transparent" Padding="8,6" TextWrapping="Wrap"/>
 					</ScrollViewer>					
 				</Grid>
 			</Border>

@@ -369,4 +369,10 @@
   <data name="Log_StatusValidating" xml:space="preserve">
     <value>校验中...</value>
   </data>
+  <data name="ToolTip_BlockMode" xml:space="preserve">
+    <value>随机访问（速度优先）</value>
+  </data>
+  <data name="ToolTip_BlocklessMode" xml:space="preserve">
+    <value>顺序访问（容量优先）</value>
+  </data>
 </root>

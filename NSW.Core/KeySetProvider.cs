@@ -7,7 +7,7 @@ public sealed class KeySetProvider
     const string KeyFileName = "prod.keys";
     private static readonly Lazy<KeySetProvider> _instance = new(() => new KeySetProvider());
 
-    public static KeySetProvider Instance => _instance.Value;
+    public static KeySetProvider Instance => _instance.Value;    
 
     public KeySet KeySet { get; }
 

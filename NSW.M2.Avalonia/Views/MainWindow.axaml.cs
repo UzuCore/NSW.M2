@@ -1,5 +1,4 @@
 using Avalonia.Controls;
-using NSW.Core;
 using NSW.Utils;
 using Res = NSW.Core.Properties.Resources;
 

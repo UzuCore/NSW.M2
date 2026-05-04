@@ -3,17 +3,21 @@ using Avalonia.Media.Imaging;
 using NSW.Utils;
 using ReactiveUI;
 using System;
-using System.ComponentModel;
 using System.IO;
 
 namespace NSW.Avalonia.ViewModels;
 
-public class GameFile(string filePath) : ReactiveObject, INotifyPropertyChanged, IDisposable
+public class GameFile(string filePath) : ReactiveObject, IDisposable
 {
+    #region Fields & Properties
+
     private string _fileType = Core.Properties.Resources.Status_Analyzing;
+    private Bitmap? _coverBitmap;
 
     public string FilePath { get; } = filePath;
+
     public string FileName => Path.GetFileNameWithoutExtension(FilePath);
+
     public string Extension => Path.GetExtension(FilePath).TrimStart('.');
 
     public string FileSize
@@ -91,10 +95,6 @@ public class GameFile(string filePath) : ReactiveObject, INotifyPropertyChanged,
         }
     }
 
-    public static GameFile FromPath(string path) => new(path);
-
-    private Bitmap? _coverBitmap;
-
     public Bitmap? CoverBitmap
     {
         get => _coverBitmap;
@@ -114,6 +114,12 @@ public class GameFile(string filePath) : ReactiveObject, INotifyPropertyChanged,
 
     public string Developer { get; set; } = "Unknown";
 
+    #endregion
+
+    #region Public Methods
+
+    public static GameFile FromPath(string path) => new(path);
+
     public void Dispose()
     {
         (_coverBitmap as IDisposable)?.Dispose();
@@ -121,4 +127,6 @@ public class GameFile(string filePath) : ReactiveObject, INotifyPropertyChanged,
 
         GC.SuppressFinalize(this);
     }
+
+    #endregion
 }

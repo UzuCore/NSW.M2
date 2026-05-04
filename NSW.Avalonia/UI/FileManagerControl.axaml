@@ -7,7 +7,8 @@
              xmlns:ui="clr-namespace:NSW.Avalonia.UI"
              mc:Ignorable="d" d:DesignHeight="400" d:DesignWidth="800"
              x:Class="NSW.Avalonia.UI.FileManagerControl"
-             x:DataType="ui:FileManagerControl"
+             x:DataType="vm:FileManagerViewModel"
+			 
              FontFamily="Consolas">
 
 	<UserControl.Resources>
@@ -37,8 +38,7 @@
             Background="#12FFFFFF" Padding="10">
 		<Grid ColumnDefinitions="*, Auto, 160, Auto, Auto">			
 			<Panel Grid.Column="0">
-				<StackPanel Name="dropHint" VerticalAlignment="Center" HorizontalAlignment="Center"
-                            Opacity="0.7" IsHitTestVisible="False" ZIndex="1">
+				<StackPanel Name="dropHint" VerticalAlignment="Center" HorizontalAlignment="Center" Opacity="0.7" IsHitTestVisible="False" ZIndex="1" IsVisible="{Binding !GameFiles.Count}">
 					<Image Source="/Assets/Images/Drag.png" Width="32" Height="32" Margin="0,0,0,10" RenderOptions.BitmapInterpolationMode="HighQuality" />
 					<TextBlock Text="{x:Static l:Resources.Hint_DragAndDrop}"
                                FontSize="11" HorizontalAlignment="Center"/>

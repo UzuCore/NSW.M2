@@ -1,18 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace NSW.Core.Models;
+﻿namespace NSW.Core.Models;
 
 public class GameFileInfo
 {
     public string Path { get; set; } = string.Empty;
+
     public string TitleName { get; set; } = "Unknown";
+
     public string TitleId { get; set; } = "0000000000000000";
+
     public string DisplayVersion { get; set; } = "0.0.0";
+
     public string Type { get; set; } = "?";
+
     public string Developer { get; set; } = "Unknown";
+
     public byte[]? IconData { get; set; }
 }

@@ -1,9 +1,5 @@
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Documents;
-using Avalonia.Media;
-using Avalonia.Media.Imaging;
-using Avalonia.Platform;
 using Avalonia.Platform.Storage;
 using Avalonia.Threading;
 using NSW.Avalonia.Services;
@@ -19,37 +15,27 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Path = System.IO.Path;
 using Res = NSW.Core.Properties.Resources;
 
 namespace NSW.M2.Avalonia.Views;
 
 public partial class MainView : UserControl
 {
+    #region Fields & Properties
+
     private readonly Stopwatch _totalSw = new();
     private CancellationTokenSource? _cts;
-    
-    public Bitmap SelectedGameIcon { get; set; }
+    private readonly Progress<ProgressInfo> _progressReporter;
 
-    private static readonly Bitmap MergeIcon = new (AssetLoader.Open(new Uri("avares://NSW.M2.Avalonia/Assets/Images/Merge.png")));
-    private static readonly Bitmap SplitIcon = new (AssetLoader.Open(new Uri("avares://NSW.M2.Avalonia/Assets/Images/Split.png")));
-    private static readonly Bitmap CancelIcon = new(AssetLoader.Open(new Uri("avares://NSW.M2.Avalonia/Assets/Images/Cancel.png")));
+    private MainViewModel ViewModel => DataContext as MainViewModel;
 
-    Progress<ProgressInfo> _progressReporter;
+    #endregion
+
+    #region Construtor
+
     public MainView()
     {
         InitializeComponent();
-
-        txtOutput.GetObservable(TextBox.TextProperty).Subscribe(text => {
-            outputHint?.IsVisible = string.IsNullOrEmpty(text);
-        });
-        
-        txtOutput.Text = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "output");
-                
-        tbMergeText.Text = Res.Button_MergeStart;
-        imgMerge.Source = MergeIcon;
-        tbSplitText.Text = Res.Button_SplitStart;
-        imgSplit.Source = SplitIcon;
 
         _progressReporter = new (info =>
         {
@@ -62,27 +48,12 @@ public partial class MainView : UserControl
             });
         });
 
-        this.AttachedToVisualTree += (s, e) =>
-        {
-            if (DataContext is MainViewModel vm)
-            {
-                var config = AppConfig.Instance;
-                vm.CompressLevel = config.CompressLevel;
-                vm.VerifyCompress = config.VerifyCompress;
-            }
-        };
-
-        this.DetachedFromVisualTree += (s, e) =>
-        {
-            if (DataContext is MainViewModel vm)
-            {
-                var config = AppConfig.Instance;
-                config.CompressLevel = (int)vm.CompressLevel;
-                config.VerifyCompress = vm.VerifyCompress;
-                config.Save();
-            }
-        };
+        this.DetachedFromVisualTree += (s, e) => ViewModel.SaveConfig();
     }
+
+    #endregion
+
+    #region Protected Overrides
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
@@ -96,39 +67,9 @@ public partial class MainView : UserControl
         }
     }
 
-    private void BtnWorkSpace_Click(object sender, global::Avalonia.Interactivity.RoutedEventArgs e)
-    {
-        string path = txtOutput.Text?.Trim() ?? string.Empty;
+    #endregion
 
-        if (string.IsNullOrEmpty(path) || !Directory.Exists(path))
-            return;
-
-        try
-        {
-            if (OperatingSystem.IsWindows())
-            {
-                Process.Start("explorer.exe", path);
-            }
-            else if (OperatingSystem.IsLinux())
-            {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = "xdg-open",
-                    Arguments = path,
-                    CreateNoWindow = true,
-                    UseShellExecute = false
-                });
-            }
-            else if (OperatingSystem.IsMacOS())
-            {
-                Process.Start("open", path);
-            }
-        }
-        catch (Exception ex)
-        {
-            Log($"fail: {ex.Message}", LogLevel.Error);
-        }
-    }
+    #region Event Handlers
 
     private async void BtnBrowseOutput_Click(object sender, global::Avalonia.Interactivity.RoutedEventArgs e)
     {
@@ -156,7 +97,7 @@ public partial class MainView : UserControl
             return;
         }
 
-        if (!FileMgr.GameFiles.Any())
+        if (!fileMgr.GameFiles.Any())
         {
             await MessageBoxHelper.ShowWarning(Res.Main_Err_NoFiles);
             return;
@@ -168,13 +109,13 @@ public partial class MainView : UserControl
             return;
         }
 
-        if (FileMgr.GameFiles.Any(f => f.IsKeyMissing))
+        if (fileMgr.GameFiles.Any(f => f.IsKeyMissing))
         {
             await SetWorking(true);
             progressLabel.Text = Res.Main_Log_Recalculating;
 
             bool completed = false;
-            FileMgr.RecalcKeyMissingFiles(() => completed = true);
+            fileMgr.RecalcKeyMissingFiles(() => completed = true);
 
             while (!completed)
                 await Task.Delay(100);
@@ -194,23 +135,22 @@ public partial class MainView : UserControl
         await SetWorking(true);
         _totalSw.Restart();
 
-        bool verify = tbVerify.IsChecked == true;
-        int compressLevel = (int)sliderCompression.Value;
+        int compressLevel = (int)ViewModel.CompressLevel;
+        if (compressLevel == 2)
+            compressLevel = 0;
+        bool isValidationEnabled = ViewModel.IsValidationEnabled;
+        bool useBlockMode = ViewModel.UseBlockMode;
 
         try
         {
             await Task.Run(async () =>
             {
-                var results = await NspMergeService.Merge(inputPaths, outputDir, compressLevel, verify, _progressReporter, LogFromService, _cts.Token);
+                var results = await NspMergeService.Merge(inputPaths, outputDir, compressLevel, isValidationEnabled, useBlockMode, _progressReporter, Log, _cts.Token);
 
                 if (results != null && results.Count > 0)
                 {
                     Log(string.Format(Res.Main_Log_AllComplete, _totalSw.Elapsed.ToString(@"mm\:ss")), LogLevel.Ok);
-
-                    Dispatcher.UIThread.Post(async () =>
-                    {
-                        await MessageBoxHelper.ShowInfo(Res.Main_Msg_Done);
-                    });
+                    Dispatcher.UIThread.Post(async () => await MessageBoxHelper.ShowInfo(Res.Main_Msg_Done));
                 }
             }, _cts.Token);
         }
@@ -239,7 +179,7 @@ public partial class MainView : UserControl
             return;
         }
 
-        if (!FileMgr.GameFiles.Any())
+        if (!fileMgr.GameFiles.Any())
         {
             await MessageBoxHelper.ShowWarning(Res.Main_Err_NoFiles);
             return;
@@ -258,13 +198,13 @@ public partial class MainView : UserControl
             return;
         }
 
-        if (FileMgr.GameFiles.Any(f => f.IsKeyMissing))
+        if (fileMgr.GameFiles.Any(f => f.IsKeyMissing))
         {
             await SetWorking(true, isSplit: true);
             progressLabel.Text = Res.Main_Log_Recalculating;
 
             bool completed = false;
-            FileMgr.RecalcKeyMissingFiles(() => completed = true);
+            fileMgr.RecalcKeyMissingFiles(() => completed = true);
 
             while (!completed)
                 await Task.Delay(100);
@@ -283,22 +223,18 @@ public partial class MainView : UserControl
             {
                 int resultCount = 0;
 
-                for (int i=0; i< FileMgr.GameFiles.Count; i++)
+                for (int i=0; i< fileMgr.GameFiles.Count; i++)
                 {
-                    var fileVm = FileMgr.GameFiles[i];
+                    var fileVm = fileMgr.GameFiles[i];
                     _cts.Token.ThrowIfCancellationRequested();
-                    resultCount += NspSplitService.Split(fileVm.FilePath, outputDir, i + 1, FileMgr.GameFiles.Count, _progressReporter, LogFromService, _cts.Token);
+                    resultCount += NspSplitService.Split(fileVm.FilePath, outputDir, i + 1, fileMgr.GameFiles.Count, _progressReporter, Log, _cts.Token);
                 }
 
                 Log(string.Format(Res.Main_Log_AllComplete, _totalSw.Elapsed.ToString(@"mm\:ss")), LogLevel.Ok);
 
                 if (resultCount > 0)
-                {
-                    Dispatcher.UIThread.Post(async () =>
-                    {
-                        await MessageBoxHelper.ShowInfo(Res.Main_Msg_SplitDone);
-                    });
-                }
+                    Dispatcher.UIThread.Post(async () => await MessageBoxHelper.ShowInfo(Res.Main_Msg_SplitDone));
+
             }, _cts.Token);
         }
         catch (OperationCanceledException)
@@ -317,23 +253,21 @@ public partial class MainView : UserControl
         }
     }
 
+    #endregion
+
+    #region Private Methods
+
     private bool TryGetMergeInputs(out List<string> inputPaths, out string outputDir, out string errorMsg)
     {
         inputPaths = [];
         outputDir = string.Empty;
         errorMsg = string.Empty;
 
-        if (FileMgr.GameFiles.Any(f => f.IsKeyMissing))
+        if (fileMgr.GameFiles.Any(f => f.IsKeyMissing))
         {
             errorMsg = Res.Main_Err_NoKeys;
             return false;
         }
-
-        //if (!FileMgr.GameFiles.Any(f => f.FileType.Contains('B')))
-        //{
-        //    errorMsg = Res.Main_Err_NoBase;
-        //    return false;
-        //}
 
         outputDir = txtOutput.Text?.Trim() ?? string.Empty;
         if (string.IsNullOrEmpty(outputDir))
@@ -342,99 +276,32 @@ public partial class MainView : UserControl
             return false;
         }
 
-        inputPaths = [.. FileMgr.GameFiles.Select(f => f.FilePath)];
+        inputPaths = [.. fileMgr.GameFiles
+            .Select(f => f.FilePath)];
+
         return true;
     }
 
-    private void LogFromService(string msg, LogLevel level, string titleId) => Log(msg, level, titleId);
+    private void Log(string msg, LogLevel level = LogLevel.Info, string titleId = "") => LogHelper.Log(logBox, svLogBox, fileMgr.GetCoverImageByTitleId(titleId), msg, level);
 
-    private void Log(string msg, LogLevel level = LogLevel.Info, string titleId = "")
-    {
-        var color = LogColor.GetColor(level);
-
-        Dispatcher.UIThread.Post(() =>
-        {
-            logBox.Inlines ??= [];
-            string timestamp = DateTime.Now.ToString("HH:mm:ss");
-            var brush = new SolidColorBrush(color);
-
-            var timeRun = new Run($"[{timestamp}] ")
-            {
-                Foreground = brush,
-                BaselineAlignment = BaselineAlignment.Center
-            };
-            logBox.Inlines.Add(timeRun);
-
-            if (!string.IsNullOrEmpty(titleId) && titleId.Length >= 12)
-            {
-                string baseId = titleId[..12];
-                var game = FileMgr.GameFiles.FirstOrDefault(f =>
-                    f.TitleId != null && f.TitleId.StartsWith(baseId, StringComparison.OrdinalIgnoreCase));
-
-                if (game?.CoverBitmap != null)
-                {
-                    var img = new Image
-                    {
-                        Source = game.CoverBitmap,
-                        Width = 40,
-                        Height = 40,
-                        Margin = new Thickness(4, 0, 8, 0)
-                    };
-
-                    var container = new InlineUIContainer(img)
-                    {
-                        BaselineAlignment = BaselineAlignment.Center
-                    };
-                    logBox.Inlines.Add(container);
-                }
-            }
-
-            var msgRun = new Run($"{msg}{Environment.NewLine}")
-            {
-                Foreground = brush,
-                BaselineAlignment = BaselineAlignment.Center
-            };
-            logBox.Inlines.Add(msgRun);
-
-            Dispatcher.UIThread.Post(() => svLogBox.ScrollToEnd(), DispatcherPriority.Background);
-        });
-    }
 
     private async Task SetWorking(bool working, bool isSplit = false)
     {
         await Dispatcher.UIThread.InvokeAsync(() =>
         {
-            if (working)
-            {
-                if (!isSplit)
-                {
-                    tbMergeText.Text = Res.Button_Cancel;
-                    imgMerge.Source = CancelIcon;
-                }
-                else
-                {
-                    tbSplitText.Text = Res.Button_Cancel;
-                    imgSplit.Source = CancelIcon;
-                }
-            }
-            else
-            {
-                tbMergeText.Text = Res.Button_MergeStart;
-                imgMerge.Source = MergeIcon;
-                tbSplitText.Text = Res.Button_SplitStart;
-                imgSplit.Source = SplitIcon;
-            }
-
+            btnMergeStart.IsRunning = working && !isSplit;
+            btnSplitStart.IsRunning = working && isSplit;
             btnMergeStart.IsEnabled = !working || (working && !isSplit);
             btnSplitStart.IsEnabled = !working || (working && isSplit);
-
-            FileMgr.IsEnabled = !working;               
+            fileMgr.IsEnabled = !working;               
             btnWorkSpace.IsEnabled = !working;
             btnBrowseOutput.IsEnabled = !working;
             sliderCompression.IsEnabled = !working;
-            tbVerify.IsEnabled = !working;
+            tbValidation.IsEnabled = !working;
             txtOutput.IsEnabled = !working;
             progressArea.IsVisible = working;
         });
     }
+
+    #endregion
 }

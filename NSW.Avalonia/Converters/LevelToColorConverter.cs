@@ -11,18 +11,16 @@ public class LevelToColorConverter : IValueConverter
     {
         if (value is double level)
         {
-            if (level <= 18)
-            {
-                double t = level / 18.0;
-                byte r = (byte)(255 * t);
-                return new SolidColorBrush(new Color(255, r, 255, 0));
-            }
-            else
-            {
-                double t = (level - 18) / 4.0;
-                byte g = (byte)(255 * (1.0 - t));
-                return new SolidColorBrush(new Color(255, 255, g, 0));
-            }
+            if (level <= 2) return Brushes.White;
+
+            double t = (level - 3) / 15.0;
+            t = Math.Clamp(t, 0, 1);
+
+            byte r = (byte)(255 * t);
+            byte g = 255;
+            byte b = (byte)(255 * (1.0 - t * 0.8));
+
+            return new SolidColorBrush(new Color(255, r, g, b));
         }
         return Brushes.White;
     }

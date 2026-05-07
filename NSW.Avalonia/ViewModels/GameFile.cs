@@ -20,15 +20,39 @@ public class GameFile(string filePath) : ReactiveObject, IDisposable
 
     public string Extension => Path.GetExtension(FilePath).TrimStart('.');
 
+    public IBrush ExtensionColor
+    {
+        get
+        {
+            string ext = Extension?.ToLower() ?? string.Empty;
+
+            return ext switch
+            {
+                "nsp" => Brush.Parse("#CC6C5B7B"),
+                "nsz" => Brush.Parse("#CCC0B3D5"),
+                "xci" => Brush.Parse("#CCE2703A"),
+                "xcz" => Brush.Parse("#CCF5D5AE"),
+                _ => Brushes.Transparent
+            };
+        }
+    }
+
+    public long RawBytes
+    {
+        get 
+        {
+            var info = new FileInfo(FilePath);
+            return info.Length;
+        }
+    }
+
     public string FileSize
     {
         get
         {
             try
             {
-                var info = new FileInfo(FilePath);
-                if (!info.Exists) return "-";
-                return Common.FormatFileSize(info.Length);
+                return Common.FormatFileSize(RawBytes);
             }
             catch { return "-"; }
         }

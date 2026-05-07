@@ -29,6 +29,7 @@
     </PackageReference>
     <PackageReference Include="MessageBox.Avalonia" />
     <PackageReference Include="ReactiveUI.Avalonia" />
+    <PackageReference Include="System.IO.Pipelines" />
   </ItemGroup>
 
   <ItemGroup>

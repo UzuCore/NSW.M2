@@ -32,10 +32,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ZstdSharp.Port" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Compile Condition="Exists('Common\ResultNameResolver.Generated.cs')" Remove="Common\ResultNameResolver.Archive.cs" />
     <Compile Condition="Exists('Common\Keys\DefaultKeySet.Generated.cs')" Remove="Common\Keys\DefaultKeySet.Empty.cs" />
   </ItemGroup>
@@ -51,6 +47,7 @@
     <PackageReference Include="JetBrains.Annotations" ExcludeAssets="runtime" PrivateAssets="all">
       <IncludeAssets>compile; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="ZstdSharp.Port" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\NSW.Utils\NSW.Utils.csproj" />

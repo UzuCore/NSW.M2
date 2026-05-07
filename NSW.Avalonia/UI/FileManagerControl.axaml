@@ -58,17 +58,28 @@
                           HorizontalScrollBarVisibility="Auto"
                           VerticalScrollBarVisibility="Auto">
 					<DataGrid.Columns>
-						<DataGridTemplateColumn Header="{x:Static l:Resources.Header_Type}" Width="80" CellTemplate="{StaticResource TypeCellTemplate}"/>
-						<DataGridTemplateColumn Header="{x:Static l:Resources.Header_FileName}" Width="Auto" MaxWidth="450">
+						<DataGridTemplateColumn Header="{x:Static l:Resources.Header_Type}" Width="80" CellTemplate="{StaticResource TypeCellTemplate}" SortMemberPath="FileType"/>
+						<DataGridTemplateColumn Header="{x:Static l:Resources.Header_FileName}" Width="Auto" MaxWidth="450" SortMemberPath="FileName">
 							<DataGridTemplateColumn.CellTemplate>
 								<DataTemplate x:DataType="vm:GameFile">
 									<TextBlock Text="{Binding FileName}" FontSize="11" VerticalAlignment="Center" Padding="5,0" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding FileName}"/>
 								</DataTemplate>
 							</DataGridTemplateColumn.CellTemplate>
 						</DataGridTemplateColumn>
-						<DataGridTextColumn Header="{x:Static l:Resources.Header_Ext}" Width="Auto" Binding="{Binding Extension}" FontSize="11"/>
-						<DataGridTextColumn Header="{x:Static l:Resources.Header_Size}" Width="Auto" Binding="{Binding FileSize}" FontSize="11"/>
-						<DataGridTemplateColumn Header="{x:Static l:Resources.Header_FilePath}" Width="Auto" MaxWidth="400">
+						<DataGridTemplateColumn Header="{x:Static l:Resources.Header_Ext}" Width="Auto" SortMemberPath="Extension">
+							<DataGridTemplateColumn.CellTemplate>
+								<DataTemplate>
+									<Border Background="{Binding ExtensionColor}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+										<TextBlock Text="{Binding Extension}"
+												   FontSize="11"
+												   Margin="10,0"
+												   VerticalAlignment="Center"/>
+									</Border>
+								</DataTemplate>
+							</DataGridTemplateColumn.CellTemplate>
+						</DataGridTemplateColumn>
+						<DataGridTextColumn Header="{x:Static l:Resources.Header_Size}" Width="Auto" Binding="{Binding FileSize}" FontSize="11" SortMemberPath="RawBytes"/>
+						<DataGridTemplateColumn Header="{x:Static l:Resources.Header_FilePath}" Width="Auto" MaxWidth="400" SortMemberPath="FilePath">
 							<DataGridTemplateColumn.CellTemplate>
 								<DataTemplate x:DataType="vm:GameFile">
 									<TextBlock Text="{Binding FilePath}" FontSize="11" VerticalAlignment="Center" Padding="5,0" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding FilePath}"/>

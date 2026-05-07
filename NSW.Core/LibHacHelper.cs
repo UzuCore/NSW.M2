@@ -14,7 +14,7 @@ using LibHac.Tools.Ncm;
 using NSW.Core.Models;
 using System.Diagnostics;
 using System.Globalization;
-
+using System.Text;
 using static LibHac.Ns.ApplicationControlProperty;
 
 namespace NSW.Core;
@@ -364,5 +364,77 @@ public static class LibHacHelper
         byte[] iconBuf = new byte[size];
         logoFile.Get.Read(out _, 0, iconBuf).ThrowIfFailure();
         return iconBuf;
+    }
+
+    public static string GetTitleIdFromRom(string path)
+    {
+        var keySet = KeySetProvider.Instance.KeySet;
+        using var storage = new LocalStorage(path, FileAccess.Read);
+        IFileSystem fs = storage.OpenFileSystem(keySet, path);
+        var entries = fs.EnumerateEntries("/", "*.nca")
+            .Concat(fs.EnumerateEntries("/", "*.ncz"))
+            .Where(e => e.Type == DirectoryEntryType.File);
+
+        foreach (var entry in entries)
+        {
+            using var ncaFile = new UniqueRef<IFile>();
+            if (fs.OpenFile(ref ncaFile.Ref, entry.FullPath.ToU8Span(), OpenMode.Read).IsFailure()) continue;
+            try
+            {
+                bool isNcz = entry.Name.EndsWith(".ncz", StringComparison.OrdinalIgnoreCase);
+                Nca nca = isNcz
+                    ? new Ncz(keySet, ncaFile.Release().AsStream(), NczReadMode.Fast)
+                    : new Nca(keySet, ncaFile.Release().AsStorage());
+
+                if (nca.Header.ContentType == NcaContentType.Program)
+                    return nca.Header.TitleId.ToString("X16");
+            }
+            catch { continue; }
+        }
+
+        throw new Exception("Title ID를 찾을 수 없습니다.");
+    }
+
+    public static (byte KeyGeneration, uint SdkVersion) ReadControlNcaInfo(string ncaPath)
+    {
+        if (!File.Exists(ncaPath))
+            throw new FileNotFoundException("control.nca 파일이 없습니다.", ncaPath);
+
+        using var controlFs = new FileStream(ncaPath, FileMode.Open, FileAccess.Read);
+        var storage = new StreamStorage(controlFs, false);
+        var nca = new Nca(KeySetProvider.Instance.KeySet, storage);
+
+        return (nca.Header.KeyGeneration, nca.Header.SdkVersion.Version);
+    }
+
+    public static (string KrTitle, string EnTitle, string DisplayVersion, ulong TitleId) ReadNacpInfo(string nacpPath)
+    {
+        if (!File.Exists(nacpPath))
+            throw new FileNotFoundException("control.nacp 파일이 없습니다.", nacpPath);
+
+        byte[] nacpData = File.ReadAllBytes(nacpPath);
+
+        ulong titleId = BitConverter.ToUInt64(nacpData, 0x30B0);
+        string displayVersion = Encoding.UTF8.GetString(nacpData, 0x3060, 0x10).TrimEnd('\0');
+
+        string enTitle = Encoding.UTF8.GetString(nacpData, (int)Language.AmericanEnglish * 0x300, 0x200).TrimEnd('\0');
+        string krTitle = Encoding.UTF8.GetString(nacpData, (int)Language.Korean * 0x300, 0x200).TrimEnd('\0');
+
+        if (string.IsNullOrWhiteSpace(krTitle) && string.IsNullOrWhiteSpace(enTitle))
+        {
+            for (int i = 0; i < Constants.LanguageCount; i++)
+            {
+                string fallback = Encoding.UTF8.GetString(nacpData, i * 0x300, 0x200).Trim('\0', ' ');
+                if (!string.IsNullOrWhiteSpace(fallback))
+                {
+                    krTitle = enTitle = fallback;
+                    break;
+                }
+            }
+        }
+        else if (string.IsNullOrWhiteSpace(krTitle)) krTitle = enTitle;
+        else if (string.IsNullOrWhiteSpace(enTitle)) enTitle = krTitle;
+
+        return (krTitle, enTitle, displayVersion, titleId);
     }
 }

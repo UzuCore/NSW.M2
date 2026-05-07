@@ -1,4 +1,5 @@
-﻿using LibHac.Common;
+﻿using DynamicData;
+using LibHac.Common;
 using LibHac.Common.Keys;
 using LibHac.Fs;
 using LibHac.Fs.Fsa;
@@ -29,9 +30,7 @@ namespace NSW.M2.Avalonia.Services;
 public static class NspMergeService
 {
     public static async Task<List<string>> Merge(IReadOnlyList<string> inputPaths, string outputDir, int compressionLevel, bool useBlockMode, bool isValidationEnabled, IProgress<ProgressInfo> progress, Action<string, LogLevel, string> log, CancellationToken ct = default)
-    {
-        return await RunMergeAll(inputPaths, outputDir, compressionLevel > 0, compressionLevel, useBlockMode, isValidationEnabled, KeySetProvider.Instance.KeySet.Clone(), progress, log, ct);
-    }
+        => await RunMergeAll(inputPaths, outputDir, compressionLevel > 0, compressionLevel, useBlockMode, isValidationEnabled, KeySetProvider.Instance.KeySet.Clone(), progress, log, ct);
 
     public static async Task<List<string>> RunMergeAll(IReadOnlyList<string> inputPaths, string outputDir, bool useCompression, int compressionLevel, bool useBlockMode, bool isValidationEnabled, KeySet keySet, IProgress<ProgressInfo> progress, Action<string, LogLevel, string> log, CancellationToken ct = default)
     {
@@ -168,6 +167,9 @@ public static class NspMergeService
                             continue;
                     }
 
+                    if (entryExt is ".tik" or ".cert")
+                        continue;
+
                     string finalName = entryExt == ".ncz" ? Path.ChangeExtension(entryName, ".nca") : entryName;
 
                     if (!fileRegistry.TryGetValue(finalName, out var value) || (value.Ext == ".ncz" && entryExt == ".nca"))
@@ -229,14 +231,17 @@ public static class NspMergeService
                     
                     log?.Invoke($"- {titleName} [{typeTag}/{ncaContentType}] {Res.Log_DecompressAndMerge}", LogLevel.Info, req.TargetBaseTitleId);
                     
-                    var ncz = new Ncz(keySet, currentStorage, NczReadMode.Original);
+                    var ncz = new Ncz(keySet, currentStorage, NczReadMode.Original);                    
                     var decStorage = ncz.BaseStorage;
 
                     decStorage.GetSize(out long decSize).ThrowIfFailure();
 
                     string label = $"{titleName} [{typeTag}] [{ncaContentType}] {Res.Log_DecompressAndMerge}";
 
-                    fileEntries.Add((finalName, async (s, onRead) => await Common.CopyStreamAsync(decStorage.AsStream(), s, onRead, ct), decSize, label));
+                    fileEntries.Add((finalName, async (s, onRead) =>
+                    {
+                        await NcaRecryptService.RecryptAsync(decStorage.AsStream(), s, 0, keySet, onRead, ct);
+                    }, decSize, label));
 
                     continue;
                 }
@@ -258,7 +263,9 @@ public static class NspMergeService
 
                     fileEntries.Add((finalName, async (s, onRead) =>
                     {
-                        await converter.ConvertAsync(capturedStorage.AsStream(), s, req.UseBlockMode, req.CompressionLevel,onRead, ct);
+                        var recryptedHeader = await NcaRecryptService.GetRecryptedHeaderAsync(capturedStorage, 0, keySet, ct);
+                        using var headerStream = new MemoryStream(recryptedHeader);
+                        await converter.ConvertAsync(headerStream, capturedStorage, s, req.UseBlockMode, req.CompressionLevel, onRead, ct);
                     }, size, label));
                 }
                 else
@@ -271,7 +278,10 @@ public static class NspMergeService
                     var capturedStorage = currentStorage;
                     string label = $"{titleName} [{typeTag}] [{ncaContentType}] {Res.Log_Merging}";
 
-                    fileEntries.Add((entryName, async (s, onRead) => await Common.CopyStreamAsync(capturedStorage.AsStream(), s, onRead, ct), size, label));
+                    fileEntries.Add((entryName, async (s, onRead) =>
+                    {
+                        await NcaRecryptService.RecryptAsync(capturedStorage.AsStream(), s, 0, keySet, onRead, ct);
+                    }, size, label));
                 }
             }
 
@@ -453,7 +463,7 @@ public static class NspMergeService
         {
             allMetas = [.. allMetas.Where(m =>
             {
-                if (!ulong.TryParse(m.TitleId, System.Globalization.NumberStyles.HexNumber, null, out ulong tid))
+                if (!ulong.TryParse(m.TitleId, NumberStyles.HexNumber, null, out ulong tid))
                     return false;
 
                 return (tid & 0xFFFFFFFFFFFF0000UL).ToString("X16")

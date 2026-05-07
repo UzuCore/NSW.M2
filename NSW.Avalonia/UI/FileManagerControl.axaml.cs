@@ -1,19 +1,19 @@
-using Avalonia.Input;
 using Avalonia.Controls;
-using Avalonia.Media.Imaging;
+using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Media;
+using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using LibHac.Tools.FsSystem;
-using NSW.Core;
 using NSW.Avalonia.ViewModels;
+using NSW.Core;
 using System;
-using System.IO;
-using System.Linq;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
-
+using System.IO;
+using System.Linq;
 using Path = System.IO.Path;
 using Res = NSW.Core.Properties.Resources;
 
@@ -115,7 +115,16 @@ public partial class FileManagerControl : UserControl, INotifyPropertyChanged
         if (storageItems != null)
         {
             var paths = storageItems
-                .Select(item => item.Path.LocalPath)
+                .Select(item => {
+                    try
+                    {
+                        return item.Path.LocalPath;
+                    }
+                    catch (InvalidOperationException)
+                    {
+                        return Path.GetFullPath(item.Path.OriginalString.Replace("file://", ""));
+                    }
+                })
                 .Where(path => !string.IsNullOrEmpty(path));
 
             var allFilePaths = ExpandPaths(paths);
@@ -192,11 +201,19 @@ public partial class FileManagerControl : UserControl, INotifyPropertyChanged
 
     private static IEnumerable<string> ExpandPaths(IEnumerable<string> paths)
     {
+        var enumerationOptions = new EnumerationOptions
+        {
+            IgnoreInaccessible = true,
+            RecurseSubdirectories = true,
+            AttributesToSkip = FileAttributes.System | FileAttributes.Hidden
+        };
+
         foreach (var path in paths)
         {
             if (Directory.Exists(path))
             {
-                var files = Directory.EnumerateFiles(path, "*.*", SearchOption.AllDirectories);
+                var files = Directory.EnumerateFiles(path, "*.*", enumerationOptions);
+
                 foreach (var file in files)
                     yield return file;
             }

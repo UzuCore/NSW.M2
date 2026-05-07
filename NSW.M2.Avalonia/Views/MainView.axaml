@@ -24,11 +24,11 @@
         </Style>
 
         <Style Selector="ToggleButton#tbValidation:checked Image#imgValidation">
-            <Setter Property="Source" Value="/Assets/Images/Checked.png"/>
+            <Setter Property="Source" Value="avares://NSW.Avalonia/Assets/Images/Checked.png"/>
         </Style>
 
         <Style Selector="ToggleButton#tbValidation:not(:checked) Image#imgValidation">
-            <Setter Property="Source" Value="/Assets/Images/Unchecked.png"/>
+            <Setter Property="Source" Value="avares://NSW.Avalonia/Assets/Images/Unchecked.png"/>
         </Style>
 
     </UserControl.Styles>
@@ -97,7 +97,7 @@
 			<Grid Grid.Row="2" Margin="0,0,0,10" ColumnDefinitions="Auto, 100, Auto, Auto, Auto, 12, *, 10, *">
 
 				<Image Grid.Column="0"
-					   Source="/Assets/Images/Level.png"
+					   Source="avares://NSW.Avalonia/Assets/Images/Level.png"
 					   Stretch="Uniform" Width="32" Margin="0,0,8,0"
 					   ToolTip.Tip="{x:Static l:Resources.ToolTip_CompressLevel}"
 					   RenderOptions.BitmapInterpolationMode="HighQuality" />
@@ -174,7 +174,7 @@
 							   DefaultText="{x:Static l:Resources.Button_MergeStart}"
 							   DefaultIcon="avares://NSW.M2.Avalonia/Assets/Images/Merge.png"
 							   CancelText="{x:Static l:Resources.Button_Cancel}"
-							   CancelIcon="avares://NSW.M2.Avalonia/Assets/Images/Cancel.png"
+							   CancelIcon="avares://NSW.Avalonia/Assets/Images/Cancel.png"
 							   IsRunning="{Binding IsMerging}"
 							   Click="BtnMergeStart_Click" />
 
@@ -183,7 +183,7 @@
 							   DefaultText="{x:Static l:Resources.Button_SplitStart}"
 							   DefaultIcon="avares://NSW.M2.Avalonia/Assets/Images/Split.png"
 							   CancelText="{x:Static l:Resources.Button_Cancel}"
-							   CancelIcon="avares://NSW.M2.Avalonia/Assets/Images/Cancel.png"
+							   CancelIcon="avares://NSW.Avalonia/Assets/Images/Cancel.png"
 							   IsRunning="{Binding IsSplitting}"
 							   Click="BtnSplitStart_Click" />
 			</Grid>

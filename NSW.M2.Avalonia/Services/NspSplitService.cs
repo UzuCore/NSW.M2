@@ -209,14 +209,7 @@ public static class NspSplitService
                     var r = Common.CalculateProgress(totalRead, size, displayName);
                     int pct = size > 0 ? (int)(totalRead * 100 / size) : 0;
 
-                    progress?.Report(new ProgressInfo(
-                        pct,
-                        $"{Res.Log_Splitting} {r.label} {typeTag}",
-                        meta.TitleId,
-                        $"{mibPerSec:F1} MiB/s",
-                        $"{elapsed:mm\\:ss} / {totalEta:mm\\:ss}"
-                    ));
-
+                    progress?.Report(new ProgressInfo(pct, $"{Res.Log_Splitting} {r.label} {typeTag}", meta.TitleId, $"{mibPerSec:F1} MiB/s", $"{elapsed:mm\\:ss} / {totalEta:mm\\:ss}"));
                     reportSw.Restart();
                 }
             }
@@ -233,7 +226,8 @@ public static class NspSplitService
             ArrayPool<byte>.Shared.Return(buffer);
 
             if (!isCompleted && File.Exists(outPath))
-                try { 
+                try 
+                { 
                     File.Delete(outPath); 
                 } 
                 catch { }

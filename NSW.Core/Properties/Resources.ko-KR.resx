@@ -375,4 +375,19 @@
   <data name="ToolTip_BlocklessMode" xml:space="preserve">
     <value>순차 액세스 (용량 우선)</value>
   </data>
+  <data name="Button_Settings" xml:space="preserve">
+    <value>설정</value>
+  </data>
+  <data name="Settings_Tab_General" xml:space="preserve">
+    <value>일반</value>
+  </data>
+  <data name="ToolTip_ForceKeyGen0" xml:space="preserve">
+    <value>펌웨어 KeyGen을 0으로 고정합니다</value>
+  </data>
+  <data name="Settings_ForceKeyGen0" xml:space="preserve">
+    <value>키젠 0 고정</value>
+  </data>
+  <data name="Settings_CompressMode" xml:space="preserve">
+    <value>압축 모드</value>
+  </data>
 </root>

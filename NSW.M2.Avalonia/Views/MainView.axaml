@@ -94,82 +94,16 @@
 				</Button>
 			</Grid>
 
-			<Grid Grid.Row="2" Margin="0,0,0,10" ColumnDefinitions="Auto, 100, Auto, Auto, Auto, 12, *, 10, *">
+			<Grid Grid.Row="2" Margin="0,0,0,10" ColumnDefinitions="Auto, 12, *, 10, *">
+				<Button Grid.Column="0" x:Name="btnSettings" Width="32" Height="32"
+							Background="Transparent" BorderThickness="0"
+							Padding="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+							Click="BtnSettings_Click" ToolTip.Tip="{x:Static l:Resources.Button_Settings}">
+					<Image Source="avares://NSW.Avalonia/Assets/Images/Settings.png" Width="32" Height="32" Stretch="Fill" RenderOptions.BitmapInterpolationMode="HighQuality"/>
+				</Button>
 
-				<Image Grid.Column="0"
-					   Source="avares://NSW.Avalonia/Assets/Images/Level.png"
-					   Stretch="Uniform" Width="32" Margin="0,0,8,0"
-					   ToolTip.Tip="{x:Static l:Resources.ToolTip_CompressLevel}"
-					   RenderOptions.BitmapInterpolationMode="HighQuality" />
 
-				<Slider Grid.Column="1"
-						x:Name="sliderCompression"
-						Minimum="2" Maximum="18"
-						Value="{Binding CompressLevel}"
-						SmallChange="1" LargeChange="1"
-						IsSnapToTickEnabled="True"
-						TickFrequency="1"
-						ToolTip.Tip="{x:Static l:Resources.ToolTip_CompressLevel}"
-						VerticalAlignment="Center"/>
-
-				<TextBlock Grid.Column="2"
-						   Text="{Binding #sliderCompression.Value, Converter={StaticResource CompressLevelTextConverter}}"
-						   Foreground="{Binding #sliderCompression.Value, Converter={StaticResource LevelToColorConverter}}"
-						   FontWeight="Bold"
-						   VerticalAlignment="Center"
-						   Margin="10,0,0,0"
-						   ToolTip.Tip="{x:Static l:Resources.ToolTip_CompressLevel}"
-						   TextAlignment="Center"/>
-
-				<Border Grid.Column="3"
-						Background="#12FFFFFF"
-						BorderBrush="#30FFFFFF"
-						BorderThickness="1"
-						CornerRadius="6"
-						Padding="6,0"
-						Margin="8,0"
-						Height="44"
-						IsVisible="{Binding IsCompressionOptionVisible}"
-						VerticalAlignment="Stretch">
-					
-					<StackPanel Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
-						<RadioButton x:Name="rbBlock"
-									 Content="Block"
-									 GroupName="BlockMode"
-									 IsChecked="{Binding UseBlockMode}"
-									 FontSize="11"
-									 ToolTip.Tip="{x:Static l:Resources.ToolTip_BlockMode}"
-									 VerticalAlignment="Center"/>
-						<RadioButton x:Name="rbBlockless"
-									 Content="Blockless"
-									 GroupName="BlockMode"
-									 IsChecked="{Binding UseBlocklessMode}"
-									 FontSize="11"
-									 ToolTip.Tip="{x:Static l:Resources.ToolTip_BlocklessMode}"
-									 Margin="5,0,0,0"
-									 VerticalAlignment="Center"/>
-					</StackPanel>
-				</Border>
-
-				<ToggleButton Grid.Column="4"
-							  x:Name="tbValidation"
-							  IsChecked="{Binding IsValidationEnabled}"
-							  Height="44" Padding="10,0"
-							  Background="#12FFFFFF"
-							  BorderBrush="#30FFFFFF"
-							  BorderThickness="1"
-							  CornerRadius="6"
-							  IsVisible="{Binding IsCompressionOptionVisible}"
-							  ToolTip.Tip="{x:Static l:Resources.ToolTip_ValidateCompress}"
-							  VerticalAlignment="Stretch">
-
-					<StackPanel Orientation="Horizontal">
-						<Image x:Name="imgValidation" Width="20" Height="20" Margin="0,0,10,0"/>
-						<TextBlock Text="{x:Static l:Resources.Button_Validate}" VerticalAlignment="Center" FontSize="12"/>
-					</StackPanel>
-				</ToggleButton>
-
-				<ui:IconButton Grid.Column="6"
+				<ui:IconButton Grid.Column="2"
 							   x:Name="btnMergeStart"
 							   DefaultText="{x:Static l:Resources.Button_MergeStart}"
 							   DefaultIcon="avares://NSW.M2.Avalonia/Assets/Images/Merge.png"
@@ -178,7 +112,7 @@
 							   IsRunning="{Binding IsMerging}"
 							   Click="BtnMergeStart_Click" />
 
-				<ui:IconButton Grid.Column="8"
+				<ui:IconButton Grid.Column="4"
 							   x:Name="btnSplitStart"
 							   DefaultText="{x:Static l:Resources.Button_SplitStart}"
 							   DefaultIcon="avares://NSW.M2.Avalonia/Assets/Images/Split.png"

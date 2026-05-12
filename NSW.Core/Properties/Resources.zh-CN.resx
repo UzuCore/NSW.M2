@@ -375,4 +375,19 @@
   <data name="ToolTip_BlocklessMode" xml:space="preserve">
     <value>顺序访问（容量优先）</value>
   </data>
+  <data name="Button_Settings" xml:space="preserve">
+    <value>设置</value>
+  </data>
+  <data name="Settings_Tab_General" xml:space="preserve">
+    <value>常规</value>
+  </data>
+  <data name="ToolTip_ForceKeyGen0" xml:space="preserve">
+    <value>将固件KeyGen强制为0</value>
+  </data>
+  <data name="Settings_ForceKeyGen0" xml:space="preserve">
+    <value>强制 KeyGen 0</value>
+  </data>
+  <data name="Settings_CompressMode" xml:space="preserve">
+    <value>压缩模式</value>
+  </data>
 </root>

@@ -1,0 +1,160 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:NSW.M2.Avalonia.ViewModels"
+        xmlns:l="clr-namespace:NSW.Core.Properties;assembly=NSW.Core"
+        xmlns:conv="clr-namespace:NSW.Avalonia.Converters;assembly=NSW.Avalonia"
+        x:Class="NSW.M2.Avalonia.Views.SettingsWindow"
+        x:DataType="vm:MainViewModel"
+        Title="{x:Static l:Resources.Button_Settings}"
+        Width="400" Height="300"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner"
+        FontFamily="Consolas">
+
+	<Window.Resources>
+		<conv:LevelToColorConverter x:Key="LevelToColorConverter"/>
+		<conv:CompressLevelTextConverter x:Key="CompressLevelTextConverter"/>
+	</Window.Resources>
+
+	<Window.Styles>
+		<Style Selector="ToggleButton#tbValidation:checked">
+			<Setter Property="Background" Value="#334CAF50"/>
+			<Setter Property="BorderBrush" Value="#4CAF50"/>
+		</Style>
+		<Style Selector="ToggleButton#tbValidation:checked Image#imgValidation">
+			<Setter Property="Source" Value="avares://NSW.Avalonia/Assets/Images/Checked.png"/>
+		</Style>
+		<Style Selector="ToggleButton#tbValidation:not(:checked) Image#imgValidation">
+			<Setter Property="Source" Value="avares://NSW.Avalonia/Assets/Images/Unchecked.png"/>
+		</Style>
+		<Style Selector="ToggleButton#tbKeyGen:checked">
+			<Setter Property="Background" Value="#334CAF50"/>
+			<Setter Property="BorderBrush" Value="#4CAF50"/>
+		</Style>
+		<Style Selector="ToggleButton#tbKeyGen:checked Image#imgKeyGen">
+			<Setter Property="Source" Value="avares://NSW.Avalonia/Assets/Images/Checked.png"/>
+		</Style>
+		<Style Selector="ToggleButton#tbKeyGen:not(:checked) Image#imgKeyGen">
+			<Setter Property="Source" Value="avares://NSW.Avalonia/Assets/Images/Unchecked.png"/>
+		</Style>
+	</Window.Styles>
+
+	<Grid Margin="16">
+		<TabControl>
+
+			<!-- 압축 옵션 탭 -->
+			<TabItem>
+				<TabItem.Header>
+					<StackPanel Orientation="Horizontal" Spacing="8">
+						<Image Source="avares://NSW.Avalonia/Assets/Images/Compress.png"
+							   Width="24" Height="24"
+							   RenderOptions.BitmapInterpolationMode="HighQuality"/>
+						<TextBlock Text="{x:Static l:Resources.Label_Compression}" VerticalAlignment="Center" FontSize="13"/>
+					</StackPanel>
+				</TabItem.Header>
+				<Grid Margin="0,16,0,0" RowDefinitions="Auto, 16, Auto, 16, Auto">
+
+					<!-- 압축 레벨 -->
+					<Grid Grid.Row="0" ColumnDefinitions="Auto, *, Auto">
+						<Image Grid.Column="0"
+							   Source="avares://NSW.Avalonia/Assets/Images/Level.png"
+							   Stretch="Uniform" Width="32" Margin="0,0,8,0"
+							   ToolTip.Tip="{x:Static l:Resources.ToolTip_CompressLevel}"
+							   RenderOptions.BitmapInterpolationMode="HighQuality"/>
+						<Slider Grid.Column="1" x:Name="sliderCompression"
+								Minimum="2" Maximum="18"
+								Value="{Binding CompressLevel}"
+								SmallChange="1" LargeChange="1"
+								IsSnapToTickEnabled="True" TickFrequency="1"
+								ToolTip.Tip="{x:Static l:Resources.ToolTip_CompressLevel}"
+								VerticalAlignment="Center"/>
+						<TextBlock Grid.Column="2"
+								   Text="{Binding #sliderCompression.Value, Converter={StaticResource CompressLevelTextConverter}}"
+								   Foreground="{Binding #sliderCompression.Value, Converter={StaticResource LevelToColorConverter}}"
+								   FontWeight="Bold" VerticalAlignment="Center"
+								   ToolTip.Tip="{x:Static l:Resources.ToolTip_CompressLevel}"
+								   MinWidth="60" TextAlignment="Center" Margin="8,0,0,0"/>
+					</Grid>
+
+					<!-- Block / Blockless -->
+					<Border Grid.Row="2"
+							Background="#12FFFFFF" BorderBrush="#30FFFFFF"
+							BorderThickness="1" CornerRadius="6"
+							Padding="12,0" Height="44">
+						<Grid ColumnDefinitions="Auto, Auto, Auto, *">
+							<Image Grid.Column="0"
+								   Source="avares://NSW.Avalonia/Assets/Images/BlockMode.png"
+								   Stretch="Uniform" Width="24"
+								   ToolTip.Tip="{x:Static l:Resources.ToolTip_BlockMode}"
+								   RenderOptions.BitmapInterpolationMode="HighQuality"/>
+							<TextBlock Grid.Column="1" Text="{x:Static l:Resources.Settings_CompressMode}"
+									   Foreground="#A0A0A0" FontSize="11"
+									   VerticalAlignment="Center" Margin="8,0,0,0"/>
+							<Border Grid.Column="2"
+									Width="1" Background="#30FFFFFF"
+									Margin="12,8"/>
+							<StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="12"
+										VerticalAlignment="Center" Margin="12,0,0,0">
+								<RadioButton Content="Block" GroupName="BlockMode"
+											 IsChecked="{Binding UseBlockMode}"
+											 ToolTip.Tip="{x:Static l:Resources.ToolTip_BlockMode}"
+											 VerticalAlignment="Center"/>
+								<RadioButton Content="Blockless" GroupName="BlockMode"
+											 IsChecked="{Binding UseBlocklessMode}"
+											 ToolTip.Tip="{x:Static l:Resources.ToolTip_BlocklessMode}"
+											 VerticalAlignment="Center"/>
+							</StackPanel>
+						</Grid>
+					</Border>
+
+					<!-- 검증 -->
+					<ToggleButton Grid.Row="4" x:Name="tbValidation"
+                                  IsChecked="{Binding IsValidationEnabled}"
+                                  Height="44" Padding="12,0"
+                                  Background="#12FFFFFF" BorderBrush="#30FFFFFF"
+                                  BorderThickness="1" CornerRadius="6"
+                                  HorizontalAlignment="Stretch"
+								  HorizontalContentAlignment="Center"
+                                  ToolTip.Tip="{x:Static l:Resources.ToolTip_ValidateCompress}">
+						<StackPanel Orientation="Horizontal">
+							<Image x:Name="imgValidation" Width="20" Height="20" Margin="0,0,10,0"/>
+							<TextBlock Text="{x:Static l:Resources.Button_Validate}" VerticalAlignment="Center" FontSize="12"/>
+						</StackPanel>
+					</ToggleButton>
+
+				</Grid>
+			</TabItem>
+
+			<!-- 일반 탭 -->
+			<TabItem>
+				<TabItem.Header>
+					<StackPanel Orientation="Horizontal" Spacing="8">
+						<Image Source="avares://NSW.Avalonia/Assets/Images/Normal.png"
+							   Width="24" Height="24"
+							   RenderOptions.BitmapInterpolationMode="HighQuality"/>
+						<TextBlock Text="{x:Static l:Resources.Settings_Tab_General}" VerticalAlignment="Center" FontSize="13"/>
+					</StackPanel>
+				</TabItem.Header>
+				<Grid Margin="0,16,0,0" RowDefinitions="Auto">
+
+					<!-- 키제너레이션 0 강제 -->
+					<ToggleButton Grid.Row="0" x:Name="tbKeyGen"
+                                  IsChecked="{Binding ForceKeyGen0}"
+                                  Height="44" Padding="12,0"
+                                  Background="#12FFFFFF" BorderBrush="#30FFFFFF"
+                                  BorderThickness="1" CornerRadius="6"
+                                  HorizontalAlignment="Stretch"
+								  HorizontalContentAlignment="Center"
+                                  ToolTip.Tip="{x:Static l:Resources.ToolTip_ForceKeyGen0}">
+						<StackPanel Orientation="Horizontal">
+							<Image x:Name="imgKeyGen" Width="20" Height="20" Margin="0,0,10,0"/>
+							<TextBlock Text="{x:Static l:Resources.Settings_ForceKeyGen0}" VerticalAlignment="Center" FontSize="12"/>
+						</StackPanel>
+					</ToggleButton>
+
+				</Grid>
+			</TabItem>
+
+		</TabControl>
+	</Grid>
+</Window>

@@ -29,10 +29,10 @@ namespace NSW.M2.Avalonia.Services;
 
 public static class NspMergeService
 {
-    public static async Task<List<string>> Merge(IReadOnlyList<string> inputPaths, string outputDir, int compressionLevel, bool useBlockMode, bool isValidationEnabled, IProgress<ProgressInfo> progress, Action<string, LogLevel, string> log, CancellationToken ct = default)
-        => await RunMergeAll(inputPaths, outputDir, compressionLevel > 0, compressionLevel, useBlockMode, isValidationEnabled, KeySetProvider.Instance.KeySet.Clone(), progress, log, ct);
+    public static async Task<List<string>> Merge(IReadOnlyList<string> inputPaths, string outputDir, int compressionLevel, bool useBlockMode, bool isValidationEnabled, bool forceKeyGen0, IProgress<ProgressInfo> progress, Action<string, LogLevel, string> log, CancellationToken ct = default)
+        => await RunMergeAll(inputPaths, outputDir, compressionLevel > 0, compressionLevel, useBlockMode, isValidationEnabled, forceKeyGen0, KeySetProvider.Instance.KeySet.Clone(), progress, log, ct);
 
-    public static async Task<List<string>> RunMergeAll(IReadOnlyList<string> inputPaths, string outputDir, bool useCompression, int compressionLevel, bool useBlockMode, bool isValidationEnabled, KeySet keySet, IProgress<ProgressInfo> progress, Action<string, LogLevel, string> log, CancellationToken ct = default)
+    public static async Task<List<string>> RunMergeAll(IReadOnlyList<string> inputPaths, string outputDir, bool useCompression, int compressionLevel, bool useBlockMode, bool isValidationEnabled, bool forceKeyGen0, KeySet keySet, IProgress<ProgressInfo> progress, Action<string, LogLevel, string> log, CancellationToken ct = default)
     {
         log?.Invoke(Res.Log_AnalyzeMetadata, LogLevel.Info, string.Empty);
 
@@ -111,7 +111,7 @@ public static class NspMergeService
 
             try
             {
-                results.Add(await RunMergeProcess(req, keySet, isValidationEnabled, idx, groups.Count, group.BaseMetas.Count > 0, group.PatchMetas.Count > 0, progress, log, ct));
+                results.Add(await RunMergeProcess(req, keySet, isValidationEnabled, forceKeyGen0, idx, groups.Count, group.BaseMetas.Count > 0, group.PatchMetas.Count > 0, progress, log, ct));
             }
             catch (Exception ex)
             {
@@ -122,7 +122,7 @@ public static class NspMergeService
         return results;
     }
 
-    public static async Task<string> RunMergeProcess(BuildRequest req, KeySet keySet, bool isValidationEnabled, int index, int groupCount, bool hasBase, bool hasUpdate, IProgress<ProgressInfo> progress, Action<string, LogLevel, string> log, CancellationToken ct = default)
+    public static async Task<string> RunMergeProcess(BuildRequest req, KeySet keySet, bool isValidationEnabled, bool forceKeyGen0, int index, int groupCount, bool hasBase, bool hasUpdate, IProgress<ProgressInfo> progress, Action<string, LogLevel, string> log, CancellationToken ct = default)
     {
         var disposables = new List<IDisposable>();
         var converters = new Dictionary<string, NcaToNczConverter>(StringComparer.OrdinalIgnoreCase);
@@ -168,7 +168,11 @@ public static class NspMergeService
                     }
 
                     if (entryExt is ".tik" or ".cert")
+                    {
+                        if (!forceKeyGen0)
+                            fileRegistry[entryName] = (path, entryName, entryExt);
                         continue;
+                    }
 
                     string finalName = entryExt == ".ncz" ? Path.ChangeExtension(entryName, ".nca") : entryName;
 
@@ -240,7 +244,7 @@ public static class NspMergeService
 
                     fileEntries.Add((finalName, async (s, onRead) =>
                     {
-                        await NcaRecryptService.RecryptAsync(decStorage.AsStream(), s, 0, keySet, onRead, ct);
+                        await NcaRecryptService.RecryptAsync(decStorage.AsStream(), s, forceKeyGen0 ? 0 : (int)nca.Header.KeyGeneration, keySet, onRead, ct);
                     }, decSize, label));
 
                     continue;
@@ -263,7 +267,7 @@ public static class NspMergeService
 
                     fileEntries.Add((finalName, async (s, onRead) =>
                     {
-                        var recryptedHeader = await NcaRecryptService.GetRecryptedHeaderAsync(capturedStorage, 0, keySet, ct);
+                        var recryptedHeader = await NcaRecryptService.GetRecryptedHeaderAsync(capturedStorage, forceKeyGen0 ? 0 : (int)nca.Header.KeyGeneration, keySet, ct);
                         using var headerStream = new MemoryStream(recryptedHeader);
                         await converter.ConvertAsync(headerStream, capturedStorage, s, req.UseBlockMode, req.CompressionLevel, onRead, ct);
                     }, size, label));
@@ -280,7 +284,7 @@ public static class NspMergeService
 
                     fileEntries.Add((entryName, async (s, onRead) =>
                     {
-                        await NcaRecryptService.RecryptAsync(capturedStorage.AsStream(), s, 0, keySet, onRead, ct);
+                        await NcaRecryptService.RecryptAsync(capturedStorage.AsStream(), s, forceKeyGen0 ? 0 : (int)nca.Header.KeyGeneration, keySet, onRead, ct);
                     }, size, label));
                 }
             }

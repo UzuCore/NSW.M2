@@ -54,6 +54,12 @@ public class MainViewModelBase : ReactiveObject
         }
     }
 
+    public bool ForceKeyGen0
+    {
+        get => _config.ForceKeyGen0;
+        set => _config.ForceKeyGen0 = value;
+    }
+
     public BaseConfig Config { get { return _config; } }
 
     #endregion

@@ -1,24 +1,32 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <VersionPrefix>2.0.0.5</VersionPrefix>
-    <OutputType>WinExe</OutputType>
+    <VersionPrefix>2.0.0.8</VersionPrefix>
     <!--If you are willing to use platform-specific APIs, use conditional compilation.
     See https://docs.avaloniaui.net/docs/guides/platforms/platform-specific-code/dotnet for more details.-->
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
-    <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+    <UseAppHost>true</UseAppHost>
   </PropertyGroup>
+
+<PropertyGroup>
+  <OutputType>WinExe</OutputType>
+</PropertyGroup>
+
+<PropertyGroup Condition="'$(RuntimeIdentifier)' == 'win-x64' Or '$(RuntimeIdentifier)' == 'win-x86'">
+  <ApplicationManifest>app.manifest</ApplicationManifest>
+  <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
+</PropertyGroup>
 
   <PropertyGroup>
     <Authors>YameSoft</Authors>
     <Copyright>Copyright © 2026 YameSoft</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <ApplicationIcon>icon.ico</ApplicationIcon>
   </PropertyGroup>
 
-  <PropertyGroup>
-    <ApplicationManifest>app.manifest</ApplicationManifest>
-    <ApplicationIcon>Assets\icon.ico</ApplicationIcon>
-  </PropertyGroup>
+<PropertyGroup Condition="'$(RuntimeIdentifier)' == 'win-x64' Or '$(RuntimeIdentifier)' == 'win-x86'">
+  <ApplicationIcon>Assets\icon.ico</ApplicationIcon>
+</PropertyGroup>
 
 <ItemGroup>
   <AvaloniaResource Include="Assets\**" />
@@ -26,6 +34,7 @@
 
 <ItemGroup>
   <Content Include="Assets\icon.ico" />
+  <Content Include="icon.ico" />
 </ItemGroup>
 
   <ItemGroup>

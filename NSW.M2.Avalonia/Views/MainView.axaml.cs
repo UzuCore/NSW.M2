@@ -37,7 +37,7 @@ public partial class MainView : UserControl
     {
         InitializeComponent();
 
-        _progressReporter = new (info =>
+        _progressReporter = new(info =>
         {
             Dispatcher.UIThread.Post(() => {
                 progress.Value = info.Percent;
@@ -70,6 +70,13 @@ public partial class MainView : UserControl
     #endregion
 
     #region Event Handlers
+
+    private async void BtnSettings_Click(object sender, global::Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        var window = new SettingsWindow(ViewModel);
+        await window.ShowDialog(TopLevel.GetTopLevel(this) as Window);
+        ViewModel.SaveConfig();
+    }
 
     private async void BtnBrowseOutput_Click(object sender, global::Avalonia.Interactivity.RoutedEventArgs e)
     {
@@ -104,7 +111,7 @@ public partial class MainView : UserControl
         }
 
         if (!FileManagerControl.KeyExists())
-        {            
+        {
             await MessageBoxHelper.ShowWarning(Res.Main_Err_NoKeys);
             return;
         }
@@ -140,12 +147,13 @@ public partial class MainView : UserControl
             compressLevel = 0;
         bool isValidationEnabled = ViewModel.IsValidationEnabled;
         bool useBlockMode = ViewModel.UseBlockMode;
+        bool forceKeyGen0 = ViewModel.ForceKeyGen0;
 
         try
         {
             await Task.Run(async () =>
             {
-                var results = await NspMergeService.Merge(inputPaths, outputDir, compressLevel, isValidationEnabled, useBlockMode, _progressReporter, Log, _cts.Token);
+                var results = await NspMergeService.Merge(inputPaths, outputDir, compressLevel, isValidationEnabled, useBlockMode, forceKeyGen0, _progressReporter, Log, _cts.Token);
 
                 if (results != null && results.Count > 0)
                 {
@@ -217,17 +225,24 @@ public partial class MainView : UserControl
         await SetWorking(true, isSplit: true);
         _totalSw.Restart();
 
+        int compressLevel = (int)ViewModel.CompressLevel;
+        if (compressLevel == 2)
+            compressLevel = 0;
+        bool isValidationEnabled = ViewModel.IsValidationEnabled;
+        bool useBlockMode = ViewModel.UseBlockMode;
+        bool forceKeyGen0 = ViewModel.ForceKeyGen0;
+
         try
         {
-            await Task.Run(() =>
+            await Task.Run(async () =>
             {
                 int resultCount = 0;
 
-                for (int i=0; i< fileMgr.GameFiles.Count; i++)
+                for (int i = 0; i < fileMgr.GameFiles.Count; i++)
                 {
                     var fileVm = fileMgr.GameFiles[i];
                     _cts.Token.ThrowIfCancellationRequested();
-                    resultCount += NspSplitService.Split(fileVm.FilePath, outputDir, i + 1, fileMgr.GameFiles.Count, _progressReporter, Log, _cts.Token);
+                    resultCount += await NspSplitService.Split(fileVm.FilePath, outputDir, compressLevel, useBlockMode, isValidationEnabled, forceKeyGen0, i + 1, fileMgr.GameFiles.Count, _progressReporter, Log, _cts.Token);
                 }
 
                 Log(string.Format(Res.Main_Log_AllComplete, _totalSw.Elapsed.ToString(@"mm\:ss")), LogLevel.Ok);
@@ -293,11 +308,9 @@ public partial class MainView : UserControl
             btnSplitStart.IsRunning = working && isSplit;
             btnMergeStart.IsEnabled = !working || (working && !isSplit);
             btnSplitStart.IsEnabled = !working || (working && isSplit);
-            fileMgr.IsEnabled = !working;               
+            fileMgr.IsEnabled = !working;
             btnWorkSpace.IsEnabled = !working;
             btnBrowseOutput.IsEnabled = !working;
-            sliderCompression.IsEnabled = !working;
-            tbValidation.IsEnabled = !working;
             txtOutput.IsEnabled = !working;
             progressArea.IsVisible = working;
         });

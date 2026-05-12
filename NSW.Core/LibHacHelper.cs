@@ -12,6 +12,7 @@ using LibHac.Tools.FsSystem;
 using LibHac.Tools.FsSystem.NcaUtils;
 using LibHac.Tools.Ncm;
 using NSW.Core.Models;
+using System.Buffers.Binary;
 using System.Diagnostics;
 using System.Globalization;
 using System.Text;
@@ -313,25 +314,24 @@ public static class LibHacHelper
         catch { return null; }
     }
 
-    private static (string Name, string Publisher, Language Language) GetTitleByLanguage(this ApplicationControlProperty control, Language preferred)
+    public static Cnmt? GetCnmtFromNca(this IStorage ncaStorage, KeySet ks)
     {
-        var title = control.Title[(int)preferred];
-        if (!string.IsNullOrWhiteSpace(title.NameString.ToString().Trim('\0')))
-            return (title.NameString.ToString().Trim('\0'), title.PublisherString.ToString().Trim('\0'), preferred);
-
-        title = control.Title[(int)Language.AmericanEnglish];
-        if (!string.IsNullOrWhiteSpace(title.NameString.ToString().Trim('\0')))
-            return (title.NameString.ToString().Trim('\0'), title.PublisherString.ToString().Trim('\0'), Language.AmericanEnglish);
-
-        for (int i = 0; i < Constants.LanguageCount; i++)
+        try
         {
-            var t = control.Title[i];
-            var name = t.NameString.ToString().Trim('\0');
-            if (!string.IsNullOrWhiteSpace(name))
-                return (name, t.PublisherString.ToString().Trim('\0'), (Language)i);
-        }
+            var nca = new Nca(ks, ncaStorage);
+            if (nca.Header.ContentType != NcaContentType.Meta) return null;
 
-        return ("Unknown", "Unknown", preferred);
+            using var metaFs = nca.OpenFileSystem(NcaSectionType.Data, IntegrityCheckLevel.None);
+            var cnmtEntry = metaFs.EnumerateEntries("/", "*.cnmt").FirstOrDefault();
+            if (cnmtEntry == null) return null;
+
+            using var cnmtFile = new UniqueRef<IFile>();
+            if (metaFs.OpenFile(ref cnmtFile.Ref, cnmtEntry.FullPath.ToU8Span(), OpenMode.Read).IsFailure())
+                return null;
+
+            return new Cnmt(cnmtFile.Get.AsStream());
+        }
+        catch { return null; }
     }
 
     public static ApplicationControlProperty? GetControlProperty(this IStorage ncaStorage, KeySet ks)
@@ -413,18 +413,25 @@ public static class LibHacHelper
             throw new FileNotFoundException("control.nacp 파일이 없습니다.", nacpPath);
 
         byte[] nacpData = File.ReadAllBytes(nacpPath);
+        var control = new ApplicationControlProperty();
+        nacpData.AsSpan().CopyTo(SpanHelpers.AsByteSpan(ref control));
 
-        ulong titleId = BitConverter.ToUInt64(nacpData, 0x30B0);
+        var titles = control.Title;
+        int langCount = control.TitleCompression == TitleCompressionValue.Enable
+            ? Constants.ExtendedLanguageCount
+            : Constants.LegacyLanguageCount;
+
+        ulong titleId = BinaryPrimitives.ReadUInt64LittleEndian(nacpData.AsSpan(0x30B0));
         string displayVersion = Encoding.UTF8.GetString(nacpData, 0x3060, 0x10).TrimEnd('\0');
 
-        string enTitle = Encoding.UTF8.GetString(nacpData, (int)Language.AmericanEnglish * 0x300, 0x200).TrimEnd('\0');
-        string krTitle = Encoding.UTF8.GetString(nacpData, (int)Language.Korean * 0x300, 0x200).TrimEnd('\0');
+        string enTitle = titles[(int)Language.AmericanEnglish].NameString.ToString().Trim('\0', ' ');
+        string krTitle = titles[(int)Language.Korean].NameString.ToString().Trim('\0', ' ');
 
         if (string.IsNullOrWhiteSpace(krTitle) && string.IsNullOrWhiteSpace(enTitle))
         {
-            for (int i = 0; i < Constants.LanguageCount; i++)
+            for (int i = 0; i < langCount; i++)
             {
-                string fallback = Encoding.UTF8.GetString(nacpData, i * 0x300, 0x200).Trim('\0', ' ');
+                string fallback = titles[i].NameString.ToString().Trim('\0', ' ');
                 if (!string.IsNullOrWhiteSpace(fallback))
                 {
                     krTitle = enTitle = fallback;
@@ -436,5 +443,33 @@ public static class LibHacHelper
         else if (string.IsNullOrWhiteSpace(enTitle)) enTitle = krTitle;
 
         return (krTitle, enTitle, displayVersion, titleId);
+    }
+
+    private static (string Name, string Publisher, Language Language) GetTitleByLanguage(
+        this ApplicationControlProperty control, Language preferred)
+    {
+        int langCount = control.TitleCompression == TitleCompressionValue.Enable
+            ? Constants.ExtendedLanguageCount
+            : Constants.LegacyLanguageCount;
+
+        var titles = control.Title;
+
+        var title = titles[(int)preferred];
+        if (!string.IsNullOrWhiteSpace(title.NameString.ToString().Trim('\0')))
+            return (title.NameString.ToString().Trim('\0'), title.PublisherString.ToString().Trim('\0'), preferred);
+
+        title = titles[(int)Language.AmericanEnglish];
+        if (!string.IsNullOrWhiteSpace(title.NameString.ToString().Trim('\0')))
+            return (title.NameString.ToString().Trim('\0'), title.PublisherString.ToString().Trim('\0'), Language.AmericanEnglish);
+
+        for (int i = 0; i < langCount; i++)
+        {
+            var t = titles[i];
+            var name = t.NameString.ToString().Trim('\0');
+            if (!string.IsNullOrWhiteSpace(name))
+                return (name, t.PublisherString.ToString().Trim('\0'), (Language)i);
+        }
+
+        return ("Unknown", "Unknown", preferred);
     }
 }

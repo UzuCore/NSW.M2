@@ -10,6 +10,7 @@ public class BaseConfig
     private int _compressLevel = 18;
     private bool _useBlockMode = true;
     private bool _useBlocklessMode = false;
+    private bool _forceKeyGen0 = false;
 
     #endregion
 
@@ -54,6 +55,12 @@ public class BaseConfig
             _useBlocklessMode = value;
             if (value) _useBlockMode = false;
         }
+    }
+
+    public bool ForceKeyGen0 
+    { 
+        get => _forceKeyGen0; 
+        set => _forceKeyGen0 = value; 
     }
 
     #endregion
@@ -102,6 +109,8 @@ public class BaseConfig
                     UseBlockMode = bool.Parse(trimmed.Split(':')[1].Trim());
                 else if (trimmed.Contains("UseBlocklessMode:"))
                     UseBlocklessMode = bool.Parse(trimmed.Split(':')[1].Trim());
+                else if (trimmed.Contains("ForceKeyGen0:"))
+                    ForceKeyGen0 = bool.Parse(trimmed.Split(':')[1].Trim());
             }
         }
         catch
@@ -120,11 +129,12 @@ public class BaseConfig
     {
         string path = DefaultFilePath;
         var content = $"{{\n" +
-                      $"  \"CompressLevel\": {CompressLevel},\n" +
-                      $"  \"VerifyCompress\": {IsValidationEnabled.ToString().ToLower()},\n" +
-                      $"  \"UseBlockMode\": {UseBlockMode.ToString().ToLower()},\n" +
-                      $"  \"UseBlocklessMode\": {UseBlocklessMode.ToString().ToLower()}\n" +
-                      $"}}";
+                  $"  \"CompressLevel\": {CompressLevel},\n" +
+                  $"  \"VerifyCompress\": {IsValidationEnabled.ToString().ToLower()},\n" +
+                  $"  \"UseBlockMode\": {UseBlockMode.ToString().ToLower()},\n" +
+                  $"  \"UseBlocklessMode\": {UseBlocklessMode.ToString().ToLower()},\n" +
+                  $"  \"ForceKeyGen0\": {ForceKeyGen0.ToString().ToLower()}\n" +
+                  $"}}";
 
         File.WriteAllText(path, content);
     }

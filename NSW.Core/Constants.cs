@@ -2,6 +2,8 @@
 {
     public static class Constants
     {
-        public const int LanguageCount = 30;
+        public const int LegacyLanguageCount = 16;
+        public const int ExtendedLanguageCount = 18;
+        public const int ReservedSlotCount = 32;
     }
 }

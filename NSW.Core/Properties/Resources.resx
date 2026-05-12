@@ -375,4 +375,19 @@
   <data name="ToolTip_BlocklessMode" xml:space="preserve">
     <value>Sequential Access (Space Priority)</value>
   </data>
+  <data name="Button_Settings" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="Settings_Tab_General" xml:space="preserve">
+    <value>General</value>
+  </data>
+  <data name="ToolTip_ForceKeyGen0" xml:space="preserve">
+    <value>Force Firmware KeyGen to 0</value>
+  </data>
+  <data name="Settings_ForceKeyGen0" xml:space="preserve">
+    <value>Force KeyGen 0</value>
+  </data>
+  <data name="Settings_CompressMode" xml:space="preserve">
+    <value>Compression Mode</value>
+  </data>
 </root>

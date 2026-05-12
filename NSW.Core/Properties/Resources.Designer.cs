@@ -79,6 +79,15 @@ namespace NSW.Core.Properties {
         }
         
         /// <summary>
+        ///   Settings과(와) 유사한 지역화된 문자열을 찾습니다.
+        /// </summary>
+        public static string Button_Settings {
+            get {
+                return ResourceManager.GetString("Button_Settings", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Start Split과(와) 유사한 지역화된 문자열을 찾습니다.
         /// </summary>
         public static string Button_SplitStart {
@@ -718,6 +727,33 @@ namespace NSW.Core.Properties {
         }
         
         /// <summary>
+        ///   Compression Mode과(와) 유사한 지역화된 문자열을 찾습니다.
+        /// </summary>
+        public static string Settings_CompressMode {
+            get {
+                return ResourceManager.GetString("Settings_CompressMode", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Force KeyGen 0과(와) 유사한 지역화된 문자열을 찾습니다.
+        /// </summary>
+        public static string Settings_ForceKeyGen0 {
+            get {
+                return ResourceManager.GetString("Settings_ForceKeyGen0", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   General과(와) 유사한 지역화된 문자열을 찾습니다.
+        /// </summary>
+        public static string Settings_Tab_General {
+            get {
+                return ResourceManager.GetString("Settings_Tab_General", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Analyzing...과(와) 유사한 지역화된 문자열을 찾습니다.
         /// </summary>
         public static string Status_Analyzing {
@@ -795,6 +831,15 @@ namespace NSW.Core.Properties {
         public static string ToolTip_CompressLevel {
             get {
                 return ResourceManager.GetString("ToolTip_CompressLevel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Force Firmware KeyGen to 0과(와) 유사한 지역화된 문자열을 찾습니다.
+        /// </summary>
+        public static string ToolTip_ForceKeyGen0 {
+            get {
+                return ResourceManager.GetString("ToolTip_ForceKeyGen0", resourceCulture);
             }
         }
         
